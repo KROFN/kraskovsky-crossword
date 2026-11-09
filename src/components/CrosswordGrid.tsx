@@ -5,7 +5,6 @@ import {
   type KeyboardEvent,
   useRef,
   useState,
-  type CSSProperties,
 } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -107,6 +106,7 @@ export default function CrosswordGrid({
   const [focusedCell, setFocusedCell] = useState<{ row: number; col: number } | null>(null);
   const [currentDirection, setCurrentDirection] = useState<'across' | 'down'>('across');
   const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
+  const viewportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (selectedEntryId === null) return;
@@ -115,7 +115,13 @@ export default function CrosswordGrid({
 
     setFocusedCell({ row: entry.row, col: entry.col });
     setCurrentDirection(entry.direction);
-    inputRefs.current.get(cellKey(entry.row, entry.col))?.focus();
+    inputRefs.current.get(cellKey(entry.row, entry.col))?.focus({ preventScroll: true });
+    // Keep the selected word visible in the horizontally scrolling mobile board.
+    const viewport = viewportRef.current;
+    if (viewport && viewport.scrollWidth > viewport.clientWidth) {
+      const cellCenter = (entry.col - BOUNDS.minCol) * 34 + 16;
+      viewport.scrollTo({ left: Math.max(0, cellCenter - viewport.clientWidth / 2), behavior: 'smooth' });
+    }
   }, [selectedEntryId]);
 
   const highlightedCells = new Set<string>();
@@ -287,9 +293,10 @@ export default function CrosswordGrid({
   const gridHeightPx = DISPLAY_ROWS * cellSize + (DISPLAY_ROWS - 1) * gap;
 
   return (
-    <div className="w-full overflow-auto rounded-xl" style={{ WebkitOverflowScrolling: 'touch' }}>
-      <div className="flex justify-center min-w-fit p-2">
+    <div ref={viewportRef} className="fc-grid-viewport" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div className="fc-grid-center">
         <div
+          className="fc-grid-inner"
           style={{
             display: 'grid',
             gridTemplateRows: `repeat(${DISPLAY_ROWS}, ${cellSize}px)`,
@@ -373,38 +380,15 @@ function CellTile({
   inputRef,
   cellSize,
 }: CellTileProps) {
-  let bgClass = 'bg-white/[0.07]';
-  let borderClass = 'border border-white/[0.12]';
-  let textClass = 'text-white';
-  let glowStyle: CSSProperties = {};
+  const stateClass = isFocused ? 'is-focused'
+    : isHighlighted ? 'is-highlighted'
+    : isInvalid ? 'is-invalid'
+    : isSolved ? 'is-solved'
+    : isRevealed ? 'is-revealed'
+    : userLetter ? 'is-filled' : '';
 
-  if (isFocused) {
-    bgClass = 'bg-[#ccff00]/25';
-    borderClass = 'border-2 border-[#ccff00]';
-    glowStyle = { boxShadow: '0 0 14px rgba(204,255,0,0.5), inset 0 0 6px rgba(204,255,0,0.15)' };
-    textClass = 'text-[#ccff00]';
-  } else if (isHighlighted) {
-    bgClass = 'bg-[#ccff00]/10';
-    borderClass = 'border border-[#ccff00]/30';
-    textClass = 'text-[#ccff00]';
-  } else if (isSolved) {
-    bgClass = 'bg-emerald-500/15';
-    borderClass = 'border border-emerald-500/30';
-    textClass = 'text-emerald-400';
-    glowStyle = { boxShadow: 'inset 0 0 4px rgba(16,185,129,0.1)' };
-  } else if (isRevealed) {
-    bgClass = 'bg-violet-500/15';
-    borderClass = 'border border-violet-500/30';
-    textClass = 'text-violet-300';
-  } else if (isInvalid) {
-    bgClass = 'bg-rose-500/14';
-    borderClass = 'border border-rose-400/35';
-    textClass = 'text-rose-300';
-    glowStyle = { boxShadow: '0 0 10px rgba(244,63,94,0.18)' };
-  } else if (userLetter) {
-    bgClass = 'bg-white/10';
-    borderClass = 'border border-white/20';
-  }
+  const textClass = isFocused ? 'text-[#172322]' : isHighlighted ? 'text-[#172322]'
+    : isSolved ? 'text-[#216652]' : 'text-[#172322]';
 
   const displayNumber =
     cell.isStart && cell.cellNumbers.length > 0 ? Math.min(...cell.cellNumbers) : null;
@@ -419,18 +403,13 @@ function CellTile({
         width: cellSize,
         height: cellSize,
         position: 'relative',
-        ...glowStyle,
       }}
-      className={`
-        relative rounded-[4px] cursor-pointer select-none transition-all duration-150
-        ${bgClass} ${borderClass}
-        flex items-center justify-center
-      `}
+      className={`fc-cell ${stateClass}`}
       onClick={onCellClick}
     >
       {displayNumber !== null ? (
         <span
-          className="absolute top-[1px] left-[2px] text-white/50 leading-none font-mono font-bold"
+          className="fc-cell-number"
           style={{ fontSize: numberFontSize }}
         >
           {displayNumber}
@@ -461,7 +440,7 @@ function CellTile({
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.5, opacity: 0 }}
             transition={{ duration: 0.12 }}
-            className={`font-bold uppercase select-none pointer-events-none ${textClass}`}
+            className={`fc-cell-letter ${textClass}`}
             style={{ fontSize }}
           >
             {userLetter}

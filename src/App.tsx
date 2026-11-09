@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useRef, type CSSProperties, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lightbulb, ChevronDown, ChevronUp, Keyboard, ShieldCheck } from 'lucide-react';
+import { Lightbulb, MoveHorizontal, Keyboard, ShieldCheck, ListOrdered, BookOpenText, ArrowUpRight } from 'lucide-react';
 
 import Header from './components/Header';
 import HeroSection from './components/HeroSection';
@@ -78,8 +78,7 @@ export default function App() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [hasStarted, setHasStarted] = useState(false);
   const [checkFeedback, setCheckFeedback] = useState<CheckFeedback | null>(null);
-  const [showCluesMobile, setShowCluesMobile] = useState(false);
-  const [showTheoryMobile, setShowTheoryMobile] = useState(false);
+  const [activePanel, setActivePanel] = useState<'clues' | 'theory'>('clues');
   const [showKeyboardTip, setShowKeyboardTip] = useState(true);
 
   const solvedEntries = computeSolvedEntries(userAnswers);
@@ -289,145 +288,53 @@ export default function App() {
   }, []);
 
   const selectedEntry = CROSSWORD_ENTRIES.find((entry) => entry.id === selectedEntryId);
-  const feedbackToneStyles: Record<CheckFeedback['tone'], string> = {
-    neutral: 'bg-white/6 border-white/10 text-white/65',
-    success: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300',
-    error: 'bg-rose-500/10 border-rose-500/20 text-rose-300',
-  };
+
+  const totalWords = CROSSWORD_ENTRIES.length;
+  const progress = Math.round((solvedEntries.size / totalWords) * 100);
 
   return (
-    <div
-      className="min-h-screen text-white"
-      style={{
-        background:
-          'radial-gradient(ellipse at 10% 0%, rgba(204,255,0,0.05) 0%, transparent 55%),' +
-          'radial-gradient(ellipse at 90% 80%, rgba(139,92,246,0.07) 0%, transparent 55%),' +
-          'radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.01) 0%, transparent 80%),' +
-          '#0a0a0a',
-        fontFamily: "'Inter', system-ui, sans-serif",
-      }}
-    >
+    <div className="fc-app">
       <Header
         solvedCount={solvedEntries.size}
         score={score}
         elapsedLabel={formatElapsed(elapsedSeconds)}
-        onReset={handleReset}
+        onReset={() => {
+          if (window.confirm('Начать кроссворд заново? Весь текущий прогресс будет сброшен.')) {
+            handleReset();
+          }
+        }}
       />
 
       <HeroSection />
 
-      <AnimatePresence mode="wait">
-        {selectedEntry && (
-          <motion.div
-            key={selectedEntry.id}
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            transition={{ duration: 0.18 }}
-            className="sticky top-[53px] z-40 bg-[#0d0d0d]/95 backdrop-blur-xl border-b border-white/8 px-4 sm:px-6 py-2.5 flex items-center gap-3"
-          >
-            <span className="flex-shrink-0 bg-[#ccff00] text-black text-xs font-black px-2 py-0.5 rounded-lg font-mono tracking-tight">
-              {selectedEntry.number}
-              {selectedEntry.direction === 'across' ? '→' : '↓'}
-            </span>
+      <main className="fc-main" id="play">
+        <div className="fc-section-intro">
+          <div>
+            <div className="fc-small-label">01 / ИГРОВОЕ ПОЛЕ</div>
+            <h2>Собери картину рынка<span className="fc-title-period">.</span></h2>
+          </div>
+          <p>Выбирай вопрос, заполняй пересечения, проверяй себя. Никакой спешки — только ты и двадцать финансовых понятий.</p>
+        </div>
 
-            <p className="flex-1 text-sm text-white/80 leading-snug line-clamp-1">
-              {selectedEntry.clue}
-            </p>
-
-            <span className="flex-shrink-0 hidden sm:block font-mono text-xs px-2 py-1 bg-white/5 rounded-lg text-white/30">
-              {selectedEntry.word.length} букв
-            </span>
-
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleCheck}
-              title="Проверить все заполненные клетки"
-              className="flex-shrink-0 flex items-center gap-1.5 bg-emerald-500/12 hover:bg-emerald-500/20 border border-emerald-500/25 hover:border-emerald-500/45 text-emerald-300 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer"
-            >
-              <ShieldCheck size={12} />
-              <span className="hidden sm:inline">Проверить</span>
-              <span className="bg-emerald-500/20 text-emerald-200 rounded-full min-w-4 h-4 px-1 flex items-center justify-center text-[10px] font-mono font-bold">
-                {checkCount}
-              </span>
-            </motion.button>
-
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleHint}
-              title="Открыть следующую неверную букву"
-              className="flex-shrink-0 flex items-center gap-1.5 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/25 hover:border-amber-500/50 text-amber-400 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer"
-            >
-              <Lightbulb size={12} />
-              <span className="hidden sm:inline">Подсказка</span>
-              <span className="bg-amber-500/30 text-amber-200 rounded-full min-w-4 h-4 px-1 flex items-center justify-center text-[10px] font-mono font-bold">
-                {hintUsed}
-              </span>
-            </motion.button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {checkFeedback && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="sticky top-[108px] z-30 px-4 sm:px-6 pt-2"
-          >
-            <div
-              className={`max-w-[1600px] mx-auto border rounded-2xl px-4 py-3 text-xs sm:text-sm backdrop-blur-xl ${feedbackToneStyles[checkFeedback.tone]}`}
-            >
-              {checkFeedback.message}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showKeyboardTip && (
-          <motion.div
-            initial={{ opacity: 0, y: 20, x: '-50%' }}
-            animate={{ opacity: 1, y: 0, x: '-50%' }}
-            exit={{ opacity: 0, y: 20, x: '-50%' }}
-            className="fixed bottom-6 left-1/2 z-50 flex items-center gap-2 bg-white/10 backdrop-blur-xl border border-white/15 rounded-2xl px-4 py-2.5 shadow-xl"
-          >
-            <Keyboard size={14} className="text-white/60" />
-            <span className="text-xs text-white/60">
-              Нажмите на клетку повторно, чтобы сменить направление (→ / ↓)
-            </span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <main className="max-w-[1600px] mx-auto px-3 sm:px-4 py-5 sm:py-6">
-        <div className="hidden lg:grid gap-4 items-start" style={{ gridTemplateColumns: '270px 1fr 270px' }}>
-          <BentoCard
-            className="overflow-y-auto"
-            style={{ maxHeight: 'calc(100vh - 190px)', position: 'sticky', top: '110px' }}
-          >
-            <TheorySidebar solvedEntries={solvedEntries} selectedEntryId={selectedEntryId} />
-          </BentoCard>
-
-          <div className="flex flex-col gap-4">
-            <BentoCard>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-5 rounded-full bg-[#ccff00]" />
-                  <h2 className="text-sm font-bold text-white/60 uppercase tracking-widest">
-                    Кроссворд
-                  </h2>
-                </div>
-                <div className="flex items-center gap-2 text-xs font-mono text-white/30">
-                  <span>{solvedEntries.size}</span>
-                  <span className="text-white/15">/</span>
-                  <span>{CROSSWORD_ENTRIES.length} слов</span>
-                </div>
+        <div className="fc-workspace">
+          <section className="fc-board" aria-label="Игровое поле финансового кроссворда">
+            <div className="fc-board-heading">
+              <div className="fc-board-title-wrap">
+                <span className="fc-board-edition">FINCROSS / NO. 001</span>
+                <h3>Кроссворд</h3>
               </div>
+              <span className="fc-board-pct">{progress.toString().padStart(2, '0')}<small>%</small></span>
+            </div>
 
+            <div className="fc-current-question" aria-live="polite">
+              <span className="fc-current-marker">{selectedEntry
+                ? `${String(selectedEntry.number).padStart(2, '0')}${selectedEntry.direction === 'across' ? '→' : '↓'}`
+                : '—'}</span>
+              <p>{selectedEntry?.clue || 'Выбери вопрос или клетку на поле'}</p>
+              {selectedEntry ? <span className="fc-current-length">{selectedEntry.word.length} букв</span> : null}
+            </div>
+
+            <div className="fc-board-grid">
               <CrosswordGrid
                 userAnswers={userAnswers}
                 solvedEntries={solvedEntries}
@@ -437,152 +344,100 @@ export default function App() {
                 selectedEntryId={selectedEntryId}
                 revealedCells={revealedCells}
               />
-            </BentoCard>
-
-            <div className="grid grid-cols-4 gap-3">
-              <StatCard label="Разгадано" value={solvedEntries.size} color="#ccff00" />
-              <StatCard
-                label="Осталось"
-                value={CROSSWORD_ENTRIES.length - solvedEntries.size}
-                color="#8b5cf6"
-              />
-              <StatCard label="Очки" value={score} color="#34d399" />
-              <StatCard label="Время" value={formatElapsed(elapsedSeconds)} color="#60a5fa" />
             </div>
-          </div>
 
-          <BentoCard
-            className="overflow-y-auto"
-            style={{ maxHeight: 'calc(100vh - 190px)', position: 'sticky', top: '110px' }}
-          >
-            <CluesList
-              selectedEntryId={selectedEntryId}
-              solvedEntries={solvedEntries}
-              onSelectEntry={handleEntrySelect}
-            />
-          </BentoCard>
+            <div className="fc-board-scroller-hint"><MoveHorizontal size={14} /><span>На небольшом экране поле можно двигать по горизонтали</span></div>
+
+            <div className="fc-board-toolbar">
+              <div className="fc-board-stats">
+                <div><span>СЛОВА</span><strong>{String(solvedEntries.size).padStart(2, '0')}<em> / {totalWords}</em></strong></div>
+                <div><span>СЧЁТ</span><strong>{score.toLocaleString('ru-RU')}</strong></div>
+              </div>
+              <div className="fc-board-actions">
+                <button type="button" className="fc-btn fc-btn-check" onClick={handleCheck} title="Проверить заполненные клетки">
+                  <ShieldCheck size={17} /><span>Проверить</span>
+                </button>
+                <button type="button" className="fc-btn fc-btn-hint" onClick={handleHint} title="Открыть одну букву в выбранном слове">
+                  <Lightbulb size={17} /><span>Подсказка</span>
+                  {hintUsed > 0 ? <small>{hintUsed}</small> : null}
+                </button>
+              </div>
+            </div>
+            <AnimatePresence>
+              {checkFeedback ? (
+                <motion.div
+                  key={checkFeedback.message}
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  role="status"
+                  className={`fc-feedback fc-feedback-${checkFeedback.tone}`}
+                >
+                  {checkFeedback.message}
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+          </section>
+
+          <aside className="fc-reference" aria-label="Вопросы и теория">
+            <div className="fc-reference-heading">
+              <span className="fc-small-label">02 / СПРАВОЧНИК</span>
+              <span className="fc-reference-count">{String(totalWords).padStart(2, '0')} ТЕРМИНОВ</span>
+            </div>
+            <div className="fc-reference-tabs" role="tablist" aria-label="Выбор справочного раздела">
+              <button type="button" role="tab" aria-selected={activePanel === 'clues'} className={activePanel === 'clues' ? 'is-active' : ''} onClick={() => setActivePanel('clues')}>
+                <ListOrdered size={17} /> Вопросы
+              </button>
+              <button type="button" role="tab" aria-selected={activePanel === 'theory'} className={activePanel === 'theory' ? 'is-active' : ''} onClick={() => setActivePanel('theory')}>
+                <BookOpenText size={17} /> Теория <span>{solvedEntries.size}</span>
+              </button>
+            </div>
+            <div className="fc-reference-content" role="tabpanel" aria-label={activePanel === 'clues' ? 'Список вопросов' : 'Открытая теория'}>
+              {activePanel === 'clues' ? (
+                <CluesList
+                  selectedEntryId={selectedEntryId}
+                  solvedEntries={solvedEntries}
+                  onSelectEntry={(id) => {
+                    handleEntrySelect(id);
+                    if (window.innerWidth <= 1020) {
+                      document.querySelector('.fc-board')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                  }}
+                />
+              ) : (
+                <TheorySidebar solvedEntries={solvedEntries} selectedEntryId={selectedEntryId} />
+              )}
+            </div>
+          </aside>
         </div>
 
-        <div className="lg:hidden flex flex-col gap-4">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <StatCard label="Разгадано" value={solvedEntries.size} color="#ccff00" />
-            <StatCard
-              label="Осталось"
-              value={CROSSWORD_ENTRIES.length - solvedEntries.size}
-              color="#8b5cf6"
-            />
-            <StatCard label="Очки" value={score} color="#34d399" />
-            <StatCard label="Время" value={formatElapsed(elapsedSeconds)} color="#60a5fa" />
+        <div className="fc-outro">
+          <div>
+            <span className="fc-small-label">03 / НА ЗАМЕТКУ</span>
+            <h2>Понимать рынок<br /><i>интереснее, чем угадывать.</i></h2>
           </div>
-
-          <BentoCard>
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-4 rounded-full bg-[#ccff00]" />
-                <span className="text-xs font-bold text-white/50 uppercase tracking-widest">
-                  Сетка кроссворда
-                </span>
-              </div>
-            </div>
-            <CrosswordGrid
-              userAnswers={userAnswers}
-              solvedEntries={solvedEntries}
-              invalidCells={invalidCells}
-              onCellChange={handleCellChange}
-              onEntrySelect={handleEntrySelect}
-              selectedEntryId={selectedEntryId}
-              revealedCells={revealedCells}
-            />
-          </BentoCard>
-
-          <BentoCard>
-            <button onClick={() => setShowCluesMobile((value) => !value)} className="w-full flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-4 rounded-full bg-[#ccff00]" />
-                <span className="text-sm font-bold text-white/60 uppercase tracking-widest">
-                  Вопросы
-                </span>
-              </div>
-              {showCluesMobile ? (
-                <ChevronUp size={16} className="text-white/30" />
-              ) : (
-                <ChevronDown size={16} className="text-white/30" />
-              )}
-            </button>
-            <AnimatePresence>
-              {showCluesMobile ? (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: 'easeInOut' }}
-                  className="overflow-hidden"
-                >
-                  <div className="pt-4">
-                    <CluesList
-                      selectedEntryId={selectedEntryId}
-                      solvedEntries={solvedEntries}
-                      onSelectEntry={(id) => {
-                        handleEntrySelect(id);
-                        setShowCluesMobile(false);
-                      }}
-                    />
-                  </div>
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
-          </BentoCard>
-
-          <BentoCard>
-            <button
-              onClick={() => setShowTheoryMobile((value) => !value)}
-              className="w-full flex items-center justify-between"
-            >
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-4 rounded-full bg-violet-400" />
-                <span className="text-sm font-bold text-white/60 uppercase tracking-widest">
-                  Теория
-                </span>
-                <span className="text-xs font-mono text-white/30 ml-1">
-                  {solvedEntries.size}/{CROSSWORD_ENTRIES.length}
-                </span>
-              </div>
-              {showTheoryMobile ? (
-                <ChevronUp size={16} className="text-white/30" />
-              ) : (
-                <ChevronDown size={16} className="text-white/30" />
-              )}
-            </button>
-            <AnimatePresence>
-              {showTheoryMobile ? (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: 'easeInOut' }}
-                  className="overflow-hidden"
-                >
-                  <div className="pt-4">
-                    <TheorySidebar solvedEntries={solvedEntries} selectedEntryId={selectedEntryId} />
-                  </div>
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
-          </BentoCard>
+          <p>Кроссворд — это только начало. После каждого правильного ответа в разделе «Теория» открывается объяснение термина. Можно возвращаться к ним в любой момент.</p>
+          <ArrowUpRight size={25} strokeWidth={1.5} aria-hidden="true"/>
         </div>
       </main>
 
-      <footer className="border-t border-white/5 py-5 px-4 sm:px-6 mt-4">
-        <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span className="text-xs text-white/20 font-mono">
-            FinCross · Финансовый кроссворд · 20 терминов
-          </span>
-          <span className="text-xs text-white/15 flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            Прогресс, время и очки сохраняются в браузере
-          </span>
-        </div>
+      <footer className="fc-footer">
+        <span>FINCROSS — A FINANCIAL LITERACY PUZZLE</span>
+        <span>Прогресс сохраняется в браузере <span aria-hidden="true">●</span> 2026</span>
       </footer>
+
+      <AnimatePresence>
+        {showKeyboardTip ? (
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 15 }}
+            className="fc-keyboard-tip"
+          >
+            <Keyboard size={16} /><span>Повторное нажатие на клетку меняет направление слова</span>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
       <VictoryModal
         isVisible={showVictory}
@@ -593,66 +448,6 @@ export default function App() {
         checkCount={checkCount}
         onReset={handleReset}
       />
-    </div>
-  );
-}
-
-function BentoCard({
-  children,
-  className = '',
-  style = {},
-}: {
-  children: ReactNode;
-  className?: string;
-  style?: CSSProperties;
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: 'easeOut' }}
-      className={`
-        bg-white/[0.035] backdrop-blur-md
-        border border-white/8
-        rounded-2xl p-4 sm:p-5
-        shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_4px_24px_rgba(0,0,0,0.3)]
-        ${className}
-      `}
-      style={style}
-    >
-      {children}
-    </motion.div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: number | string;
-  color: string;
-}) {
-  return (
-    <div
-      className="rounded-xl p-3 text-center border"
-      style={{
-        background: `${color}08`,
-        borderColor: `${color}18`,
-      }}
-    >
-      <motion.div
-        key={`${label}-${value}`}
-        initial={{ opacity: 0.75, y: 2 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.22, ease: 'easeOut' }}
-        className="text-2xl font-black font-mono tabular-nums leading-none mb-1"
-        style={{ color }}
-      >
-        {value}
-      </motion.div>
-      <div className="text-[11px] text-white/35 font-medium tracking-wide">{label}</div>
     </div>
   );
 }
