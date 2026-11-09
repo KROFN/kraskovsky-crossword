@@ -1,11 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lightbulb, ShieldCheck, List, BookOpen, ChevronLeft, ChevronRight, X, Map as MapIcon, CheckCircle2 } from 'lucide-react';
+import { Lightbulb, ShieldCheck, List, BookOpen, ChevronLeft, ChevronRight, X, LocateFixed, ZoomIn, ZoomOut, CheckCircle2 } from 'lucide-react';
 
 import Header from './components/Header';
 import CrosswordGrid from './components/CrosswordGrid';
-import MobileAnswer from './components/MobileAnswer';
-import GridOverview from './components/GridOverview';
 import CluesList from './components/CluesList';
 import TheorySidebar from './components/TheorySidebar';
 import VictoryModal from './components/VictoryModal';
@@ -81,7 +79,8 @@ export default function App() {
   const [checkFeedback, setCheckFeedback] = useState<CheckFeedback | null>(null);
   const [activePanel, setActivePanel] = useState<'clues' | 'theory'>('clues');
   const [isCompact, setIsCompact] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 850px)').matches);
-  const [showMap, setShowMap] = useState(false);
+  const [cellZoom, setCellZoom] = useState(44);
+  const [recenterSignal, setRecenterSignal] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const solvedEntries = computeSolvedEntries(userAnswers);
@@ -373,7 +372,7 @@ export default function App() {
             <div className="fc-board-heading">
               <div className="fc-board-title-wrap">
                 <span className="fc-board-eyebrow">Игровое поле</span>
-                <h2>{isCompact ? 'Твоё слово' : 'Кроссворд'}</h2>
+                <h2>Кроссворд</h2>
               </div>
               <div className="fc-board-stat">
                 <strong>{solvedEntries.size}<span> / {totalWords}</span></strong>
@@ -396,29 +395,28 @@ export default function App() {
               </div>}
             </div>
 
-            {isCompact && selectedEntry ? (
-              <MobileAnswer
-                entry={selectedEntry}
-                answers={userAnswers}
+            {isCompact && <div className="fc-zoom-bar">
+              <p>Перемещайте сетку пальцем. Нажмите на клетку, чтобы ввести букву.</p>
+              <div className="fc-zoom-controls" role="group" aria-label="Размер клеток">
+                <button type="button" aria-label="Уменьшить клетки" disabled={cellZoom <= 44} onClick={() => setCellZoom(value => Math.max(44, value - 8))}><ZoomOut size={18} /></button>
+                <span>{Math.round(cellZoom / 44 * 100)}%</span>
+                <button type="button" aria-label="Увеличить клетки" disabled={cellZoom >= 60} onClick={() => setCellZoom(value => Math.min(60, value + 8))}><ZoomIn size={18} /></button>
+              </div>
+            </div>}
+            <div className="fc-board-grid">
+              <CrosswordGrid
+                userAnswers={userAnswers}
                 solvedEntries={solvedEntries}
-                revealedCells={revealedCells}
                 invalidCells={invalidCells}
                 onCellChange={handleCellChange}
-                onNext={() => pickNearby(1)}
+                onEntrySelect={handleEntrySelect}
+                selectedEntryId={selectedEntryId}
+                revealedCells={revealedCells}
+                compact={isCompact}
+                cellSize={isCompact ? cellZoom : 32}
+                recenterSignal={recenterSignal}
               />
-            ) : !isCompact ? (
-              <div className="fc-board-grid">
-                <CrosswordGrid
-                  userAnswers={userAnswers}
-                  solvedEntries={solvedEntries}
-                  invalidCells={invalidCells}
-                  onCellChange={handleCellChange}
-                  onEntrySelect={handleEntrySelect}
-                  selectedEntryId={selectedEntryId}
-                  revealedCells={revealedCells}
-                />
-              </div>
-            ) : null}
+            </div>
 
             <div className="fc-board-toolbar">
               <div className="fc-board-score">
@@ -447,13 +445,9 @@ export default function App() {
               <button type="button" onClick={() => { setActivePanel('theory'); setDrawerOpen(true); }}>
                 <BookOpen size={19} /> Теория {solvedEntries.size > 0 ? `(${solvedEntries.size})` : ''}
               </button>
-              <button type="button" onClick={() => setShowMap(v => !v)} aria-expanded={showMap}>
-                <MapIcon size={19} /> {showMap ? 'Скрыть карту' : 'Карта'}
+              <button type="button" onClick={() => setRecenterSignal(value => value + 1)}>
+                <LocateFixed size={19} /> К слову
               </button>
-            </div>}
-            {isCompact && showMap && <div className="fc-mobile-overview">
-              <div className="fc-overview-heading"><strong>Весь кроссворд</strong><span>Синим выделено выбранное слово</span></div>
-              <GridOverview selectedEntryId={selectedEntryId} solvedEntries={solvedEntries} answers={userAnswers} />
             </div>}
           </section>
 

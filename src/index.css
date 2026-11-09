@@ -220,24 +220,6 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--blue); outline-
 }
 .fc-word-navigation button:hover { background: #eff3fd; }
 .fc-word-navigation > span { color: var(--muted); font: 600 13px "IBM Plex Mono",monospace; }
-.fc-mobile-answer { position: relative; padding: 15px 18px 19px; }
-.fc-answer-label { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 5px; color: var(--muted); font-size: 12px; margin-bottom: 11px; }
-.fc-answer-label span:first-child { color: var(--ink); font-weight: 750; font-size: 13px; }
-.fc-answer-tiles { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 7px; }
-.fc-answer-tile {
-  min-width: 0; min-height: 49px; aspect-ratio: 1;
-  background: #fafbfc; border: 1.5px solid #bcc9d0; border-radius: 8px; position: relative;
-  display: grid; place-items: center; color: var(--ink); padding: 0;
-}
-.fc-answer-tile span { font-size: 21px; font-weight: 750; line-height: 1; }
-.fc-answer-tile small { position: absolute; bottom: 3px; right: 5px; font-size: 10px; color: #52636c; }
-.fc-answer-tile.is-current { background: var(--blue-tint); border: 2px solid var(--blue); box-shadow: inset 0 0 0 1px white; }
-.fc-answer-tile.is-locked { background: #e8ecef; color: #3b515a; }
-.fc-answer-tile.is-revealed { background: #d9e6ff; }
-.fc-answer-tile.is-invalid { border-color: var(--error); background: #ffe8ec; }
-.fc-answer-tile.is-complete { background: var(--solved); border-color: #81b398; }
-.fc-mobile-keyboard-input { position: absolute; bottom: 0; left: 50%; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
-.fc-answer-help { margin: 11px 0 0; font-size: 12px; color: var(--muted); }
 .fc-mobile-tools { display: flex; border-top: 1px solid var(--line); padding: 10px 14px; gap: 8px; }
 .fc-mobile-tools button {
   flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -246,18 +228,6 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--blue); outline-
   font-size: 11px; font-weight: 700;
 }
 .fc-mobile-tools button:hover { background: #edf2fb; color: var(--blue); }
-.fc-mobile-overview { padding: 15px; border-top: 1px solid var(--line); }
-.fc-overview-heading { display: grid; gap: 3px; margin-bottom: 13px; }
-.fc-overview-heading strong { font-size: 14px; }
-.fc-overview-heading span { color: var(--muted); font-size: 12px; }
-.fc-overview-map { padding: 14px; background: #eef1f5; border-radius: 10px; }
-.fc-overview-grid { width: 100%; display: grid; gap: 2px; }
-.fc-overview-cell { min-width: 0; aspect-ratio: 1; }
-.fc-overview-cell.is-cell { background: #fff; border: 1px solid #c1cbd0; }
-.fc-overview-cell.is-filled { background: #a7bcd7; }
-.fc-overview-cell.is-solved { background: #87c1a2; }
-.fc-overview-cell.is-active { background: var(--blue); border-color: var(--blue); }
-
 /* Mobile question/theory drawer — a clear escape, no page-long scavenger hunt. */
 .fc-drawer-backdrop { position: fixed; inset: 0; z-index: 80; display: flex; align-items: flex-end; background: rgba(17,33,43,.42); }
 .fc-drawer { background: white; border-radius: 18px 18px 0 0; width: 100%; max-height: 88dvh; display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom, 0px); }
@@ -317,7 +287,6 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--blue); outline-
   .fc-active-clue { margin: 10px 18px 0; min-height: 0; padding: 8px 0 8px 12px; }
   .fc-active-number { font-size: 12px; }
   .fc-clue-question { font-size: 16px; line-height: 1.45; }
-  .fc-mobile-answer { padding: 12px 18px 15px; }
   .fc-board-toolbar { padding: 14px 18px; }
   .fc-board-score strong { font-size: 17px; }
   .fc-action { min-height: 45px; padding: 0 12px; font-size: 12px; gap: 6px; }
@@ -328,8 +297,6 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--blue); outline-
   .fc-identity small { display: none; }
   .fc-header-status { gap: 9px; }
   .fc-header-timer { font-size: 11px; }
-  .fc-answer-tiles { grid-template-columns: repeat(6,minmax(0,1fr)); gap: 6px; }
-  .fc-answer-tile { min-height: 45px; }
   .fc-board-toolbar { gap: 8px; }
   .fc-action { padding: 0 9px; font-size: 12px; }
   .fc-board-score strong { font-size: 15px; }
@@ -340,8 +307,94 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--blue); outline-
 }
 
 /* Word-first tablet sizing; no giant 90px cells. */
-.fc-answer-tiles { max-width: 450px; }
 .fc-theory-empty { text-align: center; padding: 36px 14px 42px; }
 .fc-theory-empty-icon { margin: 0 auto 13px; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 16px; color: var(--blue); background: var(--blue-tint); }
 .fc-theory-empty h3 { max-width: 260px; margin: 0 auto 8px; font-size: 17px; letter-spacing: -.025em; }
 .fc-theory-empty p { max-width: 260px; margin: 0 auto; color: var(--muted); line-height: 1.55; font-size: 13px; }
+
+
+/* The same interactive, intersecting crossword on every screen. */
+.fc-zoom-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 18px 4px;
+}
+.fc-zoom-bar p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+  max-width: 220px;
+}
+.fc-zoom-controls {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.fc-zoom-controls button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  color: var(--ink);
+  background: #f1f4f7;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+}
+.fc-zoom-controls button:disabled { opacity: .36; cursor: default; }
+.fc-zoom-controls span {
+  font: 600 12px "IBM Plex Mono", monospace;
+  min-width: 40px;
+  text-align: center;
+  color: var(--muted);
+}
+.fc-grid-viewport.is-compact {
+  height: clamp(338px, 48dvh, 470px);
+  overflow-x: auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-x pan-y;
+  scrollbar-width: thin;
+  background:
+    linear-gradient(90deg, transparent 0, transparent calc(100% - 1px), #e6eaed calc(100% - 1px)),
+    #f9faf9;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.fc-grid-viewport.is-compact .fc-grid-center {
+  min-height: 100%;
+  align-items: start;
+  padding: 10px;
+}
+.fc-grid-viewport.is-compact .fc-cell {
+  border-width: 1.5px;
+  border-radius: 4px;
+}
+.fc-grid-viewport.is-compact .fc-cell-number {
+  left: 4px;
+  top: 3px;
+  font-size: 10px !important;
+}
+.fc-grid-viewport.is-compact .fc-cell-letter {
+  font-size: 22px !important;
+}
+.fc-cell-input {
+  font-size: 16px !important;
+  caret-color: transparent;
+}
+@media (max-width: 850px) {
+  .fc-board-grid {
+    padding: 8px 14px 15px;
+  }
+  .fc-zoom-bar {
+    padding: 9px 14px 2px;
+  }
+}
+@media (max-width: 350px) {
+  .fc-zoom-bar p { max-width: 165px; font-size: 11px; }
+  .fc-zoom-controls button { width: 40px; height: 44px; }
+  .fc-zoom-controls span { min-width: 34px; }
+}

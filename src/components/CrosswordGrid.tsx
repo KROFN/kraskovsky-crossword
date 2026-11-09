@@ -22,6 +22,9 @@ interface Props {
   onEntrySelect: (entryId: number | null) => void;
   selectedEntryId: number | null;
   revealedCells: Set<string>;
+  compact?: boolean;
+  cellSize?: number;
+  recenterSignal?: number;
 }
 
 const cellKey = (row: number, col: number) => `${row},${col}`;
@@ -102,27 +105,64 @@ export default function CrosswordGrid({
   onEntrySelect,
   selectedEntryId,
   revealedCells,
+  compact = false,
+  cellSize = 32,
+  recenterSignal = 0,
 }: Props) {
   const [focusedCell, setFocusedCell] = useState<{ row: number; col: number } | null>(null);
   const [currentDirection, setCurrentDirection] = useState<'across' | 'down'>('across');
   const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
   const viewportRef = useRef<HTMLDivElement>(null);
+  const lastClickedCellRef = useRef<string | null>(null);
+  const selectionByPointerRef = useRef(false);
+  const gap = compact ? 3 : 2;
+  const step = cellSize + gap;
+  const panTo = useCallback((row: number, col: number, force = false) => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    const x = (col - BOUNDS.minCol) * step + 8;
+    const y = (row - BOUNDS.minRow) * step + 8;
+    if (force) {
+      viewport.scrollTo({
+        left: Math.max(0, x - viewport.clientWidth * 0.35),
+        top: Math.max(0, y - viewport.clientHeight * 0.22),
+        behavior: 'smooth',
+      });
+    } else {
+      let left = viewport.scrollLeft, top = viewport.scrollTop;
+      if (x < left + 24) left = Math.max(0, x - 24);
+      else if (x + cellSize > left + viewport.clientWidth - 24)
+        left = x + cellSize - viewport.clientWidth + 24;
+      if (y < top + 24) top = Math.max(0, y - 24);
+      else if (y + cellSize > top + viewport.clientHeight - 24)
+        top = y + cellSize - viewport.clientHeight + 24;
+      if (Math.abs(left - viewport.scrollLeft) > 1 || Math.abs(top - viewport.scrollTop) > 1)
+        viewport.scrollTo({ left, top, behavior: 'smooth' });
+    }
+  }, [step, cellSize]);
 
   useEffect(() => {
     if (selectedEntryId === null) return;
     const entry = CROSSWORD_ENTRIES.find((candidate) => candidate.id === selectedEntryId);
     if (!entry) return;
-
-    setFocusedCell({ row: entry.row, col: entry.col });
-    setCurrentDirection(entry.direction);
-    inputRefs.current.get(cellKey(entry.row, entry.col))?.focus({ preventScroll: true });
-    // Keep the selected word visible in the horizontally scrolling mobile board.
-    const viewport = viewportRef.current;
-    if (viewport && viewport.scrollWidth > viewport.clientWidth) {
-      const cellCenter = (entry.col - BOUNDS.minCol) * 34 + 16;
-      viewport.scrollTo({ left: Math.max(0, cellCenter - viewport.clientWidth / 2), behavior: 'smooth' });
+    if (selectionByPointerRef.current) {
+      selectionByPointerRef.current = false;
+      return;
     }
-  }, [selectedEntryId]);
+    lastClickedCellRef.current = null;
+    let target = { row: entry.row, col: entry.col };
+    // When a word shares already-filled intersections, start at its first empty tile.
+    while (userAnswers[cellKey(target.row, target.col)]) {
+      const next = getNextCell(entry, target.row, target.col);
+      if (!next) break;
+      target = next;
+    }
+    setFocusedCell(target);
+    setCurrentDirection(entry.direction);
+    // Selecting a question must not unexpectedly summon the iOS keyboard.
+    if (!compact) inputRefs.current.get(cellKey(target.row, target.col))?.focus({ preventScroll: true });
+    panTo(target.row, target.col, true);
+  }, [selectedEntryId, compact, panTo, recenterSignal]);
 
   const highlightedCells = new Set<string>();
   if (selectedEntryId !== null) {
@@ -152,27 +192,29 @@ export default function CrosswordGrid({
     (row: number, col: number) => {
       const key = cellKey(row, col);
       if (!GRID_MAP.has(key)) return;
-
-      if (focusedCell?.row === row && focusedCell?.col === col) {
-        const nextDirection = currentDirection === 'across' ? 'down' : 'across';
-        setCurrentDirection(nextDirection);
-        const entry = getEntryForCell(row, col, nextDirection);
-        if (entry) {
-          onEntrySelect(entry.id);
-          setCurrentDirection(entry.direction);
-        }
-      } else {
-        setFocusedCell({ row, col });
-        const entry = getEntryForCell(row, col, currentDirection);
-        if (entry) {
-          onEntrySelect(entry.id);
-          setCurrentDirection(entry.direction);
-        }
+      const repeated = lastClickedCellRef.current === key;
+      const nextDirection = repeated ? (currentDirection === 'across' ? 'down' : 'across') : currentDirection;
+      const entry = getEntryForCell(row, col, nextDirection);
+      if (entry) {
+        if (entry.id !== selectedEntryId) selectionByPointerRef.current = true;
+        onEntrySelect(entry.id);
+        setCurrentDirection(entry.direction);
       }
-
-      inputRefs.current.get(key)?.focus();
+      lastClickedCellRef.current = key;
+      let target = { row, col };
+      // Switching direction on a filled crossing should preserve that letter
+      // and move to the next empty tile in the newly selected word.
+      if (entry && userAnswers[key] && (repeated || entry.id !== selectedEntryId)) {
+        let next = getNextCell(entry, row, col);
+        while (next && userAnswers[cellKey(next.row, next.col)])
+          next = getNextCell(entry, next.row, next.col);
+        if (next) target = next;
+      }
+      setFocusedCell(target);
+      inputRefs.current.get(cellKey(target.row, target.col))?.focus({ preventScroll: true });
+      if (compact) panTo(target.row, target.col);
     },
-    [focusedCell, currentDirection, onEntrySelect]
+    [currentDirection, onEntrySelect, selectedEntryId, compact, panTo, userAnswers]
   );
 
   const isCellLocked = useCallback(
@@ -199,7 +241,8 @@ export default function CrosswordGrid({
             if (!isCellLocked(prev.row, prev.col)) {
               onCellChange(prev.row, prev.col, '');
             }
-            inputRefs.current.get(cellKey(prev.row, prev.col))?.focus();
+            inputRefs.current.get(cellKey(prev.row, prev.col))?.focus({ preventScroll: true });
+            if (compact) panTo(prev.row, prev.col);
           }
         }
         return;
@@ -229,15 +272,20 @@ export default function CrosswordGrid({
             event.key === 'ArrowRight' || event.key === 'ArrowLeft' ? 'across' : 'down';
           setCurrentDirection(nextDirection);
           const nextEntry = getEntryForCell(nextRow, nextCol, nextDirection);
-          if (nextEntry) onEntrySelect(nextEntry.id);
-          inputRefs.current.get(nextKey)?.focus();
+          if (nextEntry) {
+            // Keep the arrow-key target focused rather than jumping to word start.
+            if (nextEntry.id !== selectedEntryId) selectionByPointerRef.current = true;
+            onEntrySelect(nextEntry.id);
+          }
+          inputRefs.current.get(nextKey)?.focus({ preventScroll: true });
+          if (compact) panTo(nextRow, nextCol);
         }
         return;
       }
 
 
     },
-    [selectedEntryId, userAnswers, onCellChange, onEntrySelect, isCellLocked]
+    [selectedEntryId, userAnswers, onCellChange, onEntrySelect, isCellLocked, compact, panTo]
   );
 
   const handleInput = useCallback(
@@ -249,7 +297,8 @@ export default function CrosswordGrid({
           const next = getNextCell(entry, row, col);
           if (next) {
             setFocusedCell(next);
-            inputRefs.current.get(cellKey(next.row, next.col))?.focus();
+            inputRefs.current.get(cellKey(next.row, next.col))?.focus({ preventScroll: true });
+            if (compact) panTo(next.row, next.col);
           }
         }
         return;
@@ -263,23 +312,26 @@ export default function CrosswordGrid({
 
       const entry = CROSSWORD_ENTRIES.find((candidate) => candidate.id === selectedEntryId);
       if (entry) {
-        const next = getNextCell(entry, row, col);
+        let next = getNextCell(entry, row, col);
+        // Skip populated crossing tiles while entering a word. Those letters
+        // remain editable by explicitly tapping the cell.
+        while (next && (isCellLocked(next.row, next.col) || userAnswers[cellKey(next.row, next.col)]))
+          next = getNextCell(entry, next.row, next.col);
         if (next) {
           setFocusedCell(next);
-          inputRefs.current.get(cellKey(next.row, next.col))?.focus();
+          inputRefs.current.get(cellKey(next.row, next.col))?.focus({ preventScroll: true });
+          if (compact) panTo(next.row, next.col);
         }
       }
     },
-    [selectedEntryId, onCellChange, isCellLocked]
+    [selectedEntryId, onCellChange, isCellLocked, compact, panTo, userAnswers]
   );
 
-  const cellSize = 32;
-  const gap = 2;
   const gridWidthPx = DISPLAY_COLS * cellSize + (DISPLAY_COLS - 1) * gap;
   const gridHeightPx = DISPLAY_ROWS * cellSize + (DISPLAY_ROWS - 1) * gap;
 
   return (
-    <div ref={viewportRef} className="fc-grid-viewport" style={{ WebkitOverflowScrolling: 'touch' }}>
+    <div ref={viewportRef} className={`fc-grid-viewport ${compact ? 'is-compact' : ''}`} style={{ WebkitOverflowScrolling: 'touch' }}>
       <div className="fc-grid-center">
         <div
           className="fc-grid-inner"
@@ -406,10 +458,12 @@ function CellTile({
         ref={inputRef}
         type="text"
         maxLength={2}
+        inputMode="text"
+        autoCapitalize="characters"
+        enterKeyHint="next"
         value={userLetter}
         onChange={onInput}
         onKeyDown={onKeyDown}
-        onFocus={onCellClick}
         readOnly={isSolved}
         className={`absolute inset-0 opacity-0 w-full h-full ${isSolved ? 'cursor-default' : 'cursor-pointer'}`}
         aria-label={`Клетка ${cell.row + 1}, столбец ${cell.col + 1}`}
