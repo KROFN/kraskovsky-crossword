@@ -379,7 +379,7 @@ function CellTile({
   const displayNumber =
     cell.isStart && cell.cellNumbers.length > 0 ? Math.min(...cell.cellNumbers) : null;
   const fontSize = cellSize < 28 ? 11 : cellSize < 36 ? 14 : 17;
-  const numberFontSize = cellSize < 28 ? 6 : cellSize < 36 ? 8 : 9;
+  const numberFontSize = cellSize < 28 ? 7 : cellSize < 36 ? 9 : 10;
 
   return (
     <div

@@ -230,7 +230,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--blue); outline-
   display: grid; place-items: center; color: var(--ink); padding: 0;
 }
 .fc-answer-tile span { font-size: 21px; font-weight: 750; line-height: 1; }
-.fc-answer-tile small { position: absolute; bottom: 3px; right: 5px; font-size: 9px; color: #6b7782; }
+.fc-answer-tile small { position: absolute; bottom: 3px; right: 5px; font-size: 10px; color: #52636c; }
 .fc-answer-tile.is-current { background: var(--blue-tint); border: 2px solid var(--blue); box-shadow: inset 0 0 0 1px white; }
 .fc-answer-tile.is-locked { background: #e8ecef; color: #3b515a; }
 .fc-answer-tile.is-revealed { background: #d9e6ff; }
