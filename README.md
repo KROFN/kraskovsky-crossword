@@ -1,59 +1,28 @@
-# Kraskovsky Crossword
+# FINCROSS
 
-FINCROSS — интерактивный финансовый кроссворд с редакционным интерфейсом.
+Интерактивный кроссворд по финансовым терминам: 20 слов и 118 пересекающихся клеток. React + TypeScript + Vite, без аккаунта и сервера.
 
-> **Status:** Small prototype.  
-> Built as an interactive browser exercise with a fixed crossword layout and local progress storage.
+## Как устроена игра
 
-## What it does
+- **Desktop (от 851 px):** полноценная сетка 19 × 26, выбор клеток и вопросов, стрелки клавиатуры, проверка и подсказки. Tab выходит из сетки, а не зацикливает фокус на ней.
+- **Mobile / tablet (до 850 px):** отдельный режим ввода выбранного слова с крупными сенсорными клетками. Предыдущее/следующее слово, справочник вопросов и теория открываются без длинной прокрутки. Полная сетка доступна как неинтерактивная карта.
+- **Общая логика:** ответы пересекаются в едином наборе клеток; сохраняются подсказки, проверки, время, очки и статус решения. После верного слова открывается объяснение термина.
+- **Хранение:** текущий прогресс автоматически сохраняется в `localStorage` по ключу `fincross_progress_v5`; формат совместим с предыдущей версией.
 
-The app turns financial-market vocabulary into an interactive crossword experience:
-
-- fixed 19 × 26 crossword grid
-- financial terms and theory notes
-- clue list and theory sidebar
-- keyboard-friendly answer input
-- localStorage progress saving
-- timer, hints and answer checking
-- score calculation
-- victory modal
-- editorial responsive layout with a horizontally navigable mobile grid
-
-## Stack
-
-- Vite
-- React
-- TypeScript
-- Tailwind CSS
-- Framer Motion
-- react-confetti
-
-## Run locally
+## Локальный запуск
 
 ```bash
-npm install
+npm ci
+npm run typecheck
 npm run dev
 ```
 
-or:
+Production-сборка: `npm run build`. Проект создаёт самостоятельный статический HTML через `vite-plugin-singlefile` и размещается на Vercel.
 
-```bash
-bun install
-bun run dev
-```
+## Дизайн и UX
 
-Open the local Vite URL shown in the terminal.
+Game-first интерфейс: вопрос и ввод ответа находятся вместе, без отдельного рекламного первого экрана. На desktop сетка и список вопросов находятся рядом; на телефоне нет необходимости нажимать на крошечные элементы общей карты. Один основной цвет, системная типографическая иерархия, touch targets от 44 px. Состояния проверки и завершения имеют текстовое подтверждение.
 
-## Notes
+## Регрессионная проверка
 
-This repository is kept public as a compact interactive education prototype.
-
-## UI / visual system (2026 redesign)
-
-- Warm editorial canvas, structured dark game board and large financial-puzzle typography.
-- Two-column desktop layout: crossword plus a switchable Questions / Theory reference panel.
-- Mobile horizontal crossword navigation follows the selected term; clue selection returns to the board.
-- Game mechanics and `fincross_progress_v5` localStorage format are unchanged, so existing progress is preserved.
-- Accessible progress bar, active clue controls, keyboard input and reduced-motion-friendly victory screen.
-
-Validation: `npm run typecheck && npm run build`.
+Проверять ширины **320, 390, 768, 1024, 1440 px**, отсутствие горизонтального overflow, правильный ввод кириллицы, переходы между словами, пересечения, подсказку, проверку, открытие теории после решения, сохранение и восстановление прогресса, сброс и финальный экран. Проверка `npm run typecheck && npm run build` — необходима, но не заменяет браузерные UX-тесты.

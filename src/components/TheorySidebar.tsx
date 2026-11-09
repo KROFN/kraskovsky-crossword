@@ -1,4 +1,4 @@
-import { BookOpen, Check, LockKeyhole } from 'lucide-react';
+import { BookOpen, CheckCircle2 } from 'lucide-react';
 import { CROSSWORD_ENTRIES } from '../data/crosswordData';
 
 interface Props {
@@ -7,27 +7,36 @@ interface Props {
 }
 
 export default function TheorySidebar({ solvedEntries, selectedEntryId }: Props) {
+  const unlocked = CROSSWORD_ENTRIES.filter(entry => solvedEntries.has(entry.id));
+  const remaining = CROSSWORD_ENTRIES.length - unlocked.length;
+
+  if (unlocked.length === 0) {
+    return (
+      <div className="fc-theory-empty">
+        <span className="fc-theory-empty-icon"><BookOpen size={26}/></span>
+        <h3>Знания откроются по ходу игры</h3>
+        <p>Разгадай первое слово. Здесь появится краткое объяснение финансового термина.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="fc-theory">
-      <p className="fc-theory-intro">Каждое разгаданное слово открывает короткое объяснение финансового термина.</p>
+      <p className="fc-theory-intro">
+        Открыто {unlocked.length} из {CROSSWORD_ENTRIES.length} объяснений.
+        {remaining > 0 ? ` Осталось ${remaining}.` : ' Весь справочник собран!'}
+      </p>
       <div className="fc-theory-list">
-        {CROSSWORD_ENTRIES.map((entry) => {
-          const solved = solvedEntries.has(entry.id);
-          return (
-            <article
-              key={entry.id}
-              className={`fc-theory-card ${solved ? 'is-unlocked' : ''} ${selectedEntryId === entry.id ? 'is-current' : ''}`}
-            >
-              <div className="fc-theory-card-top">
-                <span className="fc-theory-index">{String(entry.number).padStart(2,'0')}</span>
-                {solved ? <Check size={14} aria-label="Открыто" /> : <LockKeyhole size={14} aria-label="Закрыто" />}
-              </div>
-              <h4>{solved ? entry.word : 'Термин закрыт'}</h4>
-              <p>{solved ? entry.theory : 'Разгадайте слово, чтобы открыть объяснение.'}</p>
-              {solved ? <span className="fc-theory-unlocked"><BookOpen size={12}/> ОТКРЫТО</span> : null}
-            </article>
-          );
-        })}
+        {unlocked.map(entry => (
+          <article key={entry.id} className={`fc-theory-card is-unlocked ${selectedEntryId === entry.id ? 'is-current' : ''}`}>
+            <div className="fc-theory-card-top">
+              <span className="fc-theory-index">№ {entry.number}</span>
+              <CheckCircle2 size={17} aria-label="Термин открыт"/>
+            </div>
+            <h4>{entry.word}</h4>
+            <p>{entry.theory}</p>
+          </article>
+        ))}
       </div>
     </div>
   );

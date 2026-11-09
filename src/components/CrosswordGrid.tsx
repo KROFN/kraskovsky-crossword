@@ -235,21 +235,7 @@ export default function CrosswordGrid({
         return;
       }
 
-      if (event.key === 'Tab') {
-        event.preventDefault();
-        const currentIndex = CROSSWORD_ENTRIES.findIndex((candidate) => candidate.id === selectedEntryId);
-        const nextIndex = event.shiftKey
-          ? (currentIndex - 1 + CROSSWORD_ENTRIES.length) % CROSSWORD_ENTRIES.length
-          : (currentIndex + 1) % CROSSWORD_ENTRIES.length;
-        const nextEntry = CROSSWORD_ENTRIES[nextIndex];
 
-        if (nextEntry) {
-          onEntrySelect(nextEntry.id);
-          setCurrentDirection(nextEntry.direction);
-          setFocusedCell({ row: nextEntry.row, col: nextEntry.col });
-          inputRefs.current.get(cellKey(nextEntry.row, nextEntry.col))?.focus();
-        }
-      }
     },
     [selectedEntryId, userAnswers, onCellChange, onEntrySelect, isCellLocked]
   );
@@ -426,7 +412,8 @@ function CellTile({
         onFocus={onCellClick}
         readOnly={isSolved}
         className={`absolute inset-0 opacity-0 w-full h-full ${isSolved ? 'cursor-default' : 'cursor-pointer'}`}
-        aria-label={`Cell ${cell.row},${cell.col}`}
+        aria-label={`Клетка ${cell.row + 1}, столбец ${cell.col + 1}`}
+        tabIndex={isFocused ? 0 : -1}
         autoComplete="off"
         autoCorrect="off"
         spellCheck={false}

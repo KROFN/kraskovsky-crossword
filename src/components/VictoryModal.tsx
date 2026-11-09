@@ -20,7 +20,7 @@ export default function VictoryModal({ isVisible, score, elapsedLabel, accuracy,
     <AnimatePresence>
       {isVisible ? (
         <>
-          {!reduceMotion ? <ReactConfetti recycle={false} numberOfPieces={180} colors={['#d9f0a1','#f48c69','#f2f1eb','#a5c8b8']} style={{ position: 'fixed', inset: 0, zIndex: 201, pointerEvents: 'none' }} /> : null}
+          {!reduceMotion ? <ReactConfetti recycle={false} numberOfPieces={110} colors={['#315fe8','#aebfff','#f5f6f4','#85bea0']} style={{ position: 'fixed', inset: 0, zIndex: 201, pointerEvents: 'none' }} /> : null}
           <motion.div
             role="dialog"
             aria-modal="true"
@@ -37,10 +37,10 @@ export default function VictoryModal({ isVisible, score, elapsedLabel, accuracy,
               transition={{ duration: reduceMotion ? 0 : 0.35 }}
               className="fc-victory-card"
             >
-              <div className="fc-victory-topline"><span>FINCROSS / ВЫПУСК 001</span><ArrowUpRight size={20}/></div>
+              <div className="fc-victory-topline"><span>FINCROSS · 20 СЛОВ</span><ArrowUpRight size={20}/></div>
               <span className="fc-victory-trophy"><Trophy size={31} strokeWidth={1.8}/></span>
               <p className="fc-victory-eyebrow">ВСЕ ДВАДЦАТЬ СЛОВ СОБРАНЫ</p>
-              <h2 id="fc-victory-title">Дело<br/><em>в словах.</em></h2>
+              <h2 id="fc-victory-title">Все слова<br/><em>разгаданы.</em></h2>
               <p className="fc-victory-description">Ты прошёл весь финансовый кроссворд. Теперь понятия, которые вчера казались сложными, уже не выглядят такими чужими.</p>
               <div className="fc-victory-stats">
                 <ResultCard icon={<Trophy size={15}/>} value={score.toLocaleString('ru-RU')} label="ОЧКИ"/>

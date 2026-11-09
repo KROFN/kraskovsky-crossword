@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lightbulb, MoveHorizontal, Keyboard, ShieldCheck, ListOrdered, BookOpenText, ArrowUpRight } from 'lucide-react';
+import { Lightbulb, ShieldCheck, List, BookOpen, ChevronLeft, ChevronRight, X, Map as MapIcon, CheckCircle2 } from 'lucide-react';
 
 import Header from './components/Header';
-import HeroSection from './components/HeroSection';
 import CrosswordGrid from './components/CrosswordGrid';
+import MobileAnswer from './components/MobileAnswer';
+import GridOverview from './components/GridOverview';
 import CluesList from './components/CluesList';
 import TheorySidebar from './components/TheorySidebar';
 import VictoryModal from './components/VictoryModal';
@@ -79,7 +80,9 @@ export default function App() {
   const [hasStarted, setHasStarted] = useState(false);
   const [checkFeedback, setCheckFeedback] = useState<CheckFeedback | null>(null);
   const [activePanel, setActivePanel] = useState<'clues' | 'theory'>('clues');
-  const [showKeyboardTip, setShowKeyboardTip] = useState(true);
+  const [isCompact, setIsCompact] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 850px)').matches);
+  const [showMap, setShowMap] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const solvedEntries = computeSolvedEntries(userAnswers);
   const prevSolvedRef = useRef<Set<number>>(new Set());
@@ -122,9 +125,32 @@ export default function App() {
       // Ignore corrupt local state.
     }
 
-    const timeoutId = window.setTimeout(() => setShowKeyboardTip(false), 5000);
-    return () => window.clearTimeout(timeoutId);
   }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 850px)');
+    const sync = () => setIsCompact(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
+
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const previous = document.body.style.overflow;
+    const returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    document.body.style.overflow = 'hidden';
+    document.querySelector<HTMLButtonElement>('.fc-drawer-close')?.focus();
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setDrawerOpen(false);
+    };
+    window.addEventListener('keydown', onEscape);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener('keydown', onEscape);
+      returnFocus?.focus({ preventScroll: true });
+    };
+  }, [drawerOpen]);
 
   useEffect(() => {
     try {
@@ -291,166 +317,180 @@ export default function App() {
 
   const totalWords = CROSSWORD_ENTRIES.length;
   const progress = Math.round((solvedEntries.size / totalWords) * 100);
+  const currentIndex = CROSSWORD_ENTRIES.findIndex(e => e.id === selectedEntryId);
+  const pickNearby = (direction: -1 | 1) => {
+    const next = (currentIndex + direction + totalWords) % totalWords;
+    setSelectedEntryId(CROSSWORD_ENTRIES[next].id);
+    setCheckFeedback(null);
+  };
+  const selectFromList = (id: number) => {
+    setSelectedEntryId(id);
+    setDrawerOpen(false);
+    setCheckFeedback(null);
+    if (isCompact) window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  const resetWithConfirmation = () => {
+    if (window.confirm('Начать кроссворд заново? Текущий прогресс будет сброшен.')) {
+      handleReset();
+      setDrawerOpen(false);
+    }
+  };
+  const reference = (
+    <>
+      <div className="fc-reference-tabs" role="tablist" aria-label="Справочник">
+        <button type="button" role="tab" aria-selected={activePanel === 'clues'} className={activePanel === 'clues' ? 'is-active' : ''} onClick={() => setActivePanel('clues')}>
+          <List size={17} /> Вопросы
+        </button>
+        <button type="button" role="tab" aria-selected={activePanel === 'theory'} className={activePanel === 'theory' ? 'is-active' : ''} onClick={() => setActivePanel('theory')}>
+          <BookOpen size={17} /> Теория {solvedEntries.size > 0 && <span>{solvedEntries.size}</span>}
+        </button>
+      </div>
+      <div className="fc-reference-content" role="tabpanel" aria-label={activePanel === 'clues' ? 'Вопросы' : 'Теория'}>
+        {activePanel === 'clues'
+          ? <CluesList selectedEntryId={selectedEntryId} solvedEntries={solvedEntries} onSelectEntry={selectFromList} />
+          : <TheorySidebar solvedEntries={solvedEntries} selectedEntryId={selectedEntryId} />}
+      </div>
+    </>
+  );
 
   return (
     <div className="fc-app">
-      <Header
-        solvedCount={solvedEntries.size}
-        score={score}
-        elapsedLabel={formatElapsed(elapsedSeconds)}
-        onReset={() => {
-          if (window.confirm('Начать кроссворд заново? Весь текущий прогресс будет сброшен.')) {
-            handleReset();
-          }
-        }}
-      />
-
-      <HeroSection />
-
+      <Header solvedCount={solvedEntries.size} score={score} elapsedLabel={formatElapsed(elapsedSeconds)} onReset={resetWithConfirmation} />
       <main className="fc-main" id="play">
-        <div className="fc-section-intro">
+        <div className="fc-page-heading">
           <div>
-            <div className="fc-small-label">01 / ИГРОВОЕ ПОЛЕ</div>
-            <h2>Собери картину рынка<span className="fc-title-period">.</span></h2>
+            <h1>Финансовый кроссворд<span>.</span></h1>
+            <p>20 понятий о рынке, деньгах и инвестициях. Выбери слово и найди ответ.</p>
           </div>
-          <p>Выбирай вопрос, заполняй пересечения, проверяй себя. Никакой спешки — только ты и двадцать финансовых понятий.</p>
+          <div className="fc-heading-progress">
+            <strong>{progress}%</strong>
+            <span>пройдено</span>
+          </div>
         </div>
 
         <div className="fc-workspace">
-          <section className="fc-board" aria-label="Игровое поле финансового кроссворда">
+          <section className="fc-board" aria-label="Финансовый кроссворд">
             <div className="fc-board-heading">
               <div className="fc-board-title-wrap">
-                <span className="fc-board-edition">FINCROSS / NO. 001</span>
-                <h3>Кроссворд</h3>
+                <span className="fc-board-eyebrow">Игровое поле</span>
+                <h2>{isCompact ? 'Твоё слово' : 'Кроссворд'}</h2>
               </div>
-              <span className="fc-board-pct">{progress.toString().padStart(2, '0')}<small>%</small></span>
+              <div className="fc-board-stat">
+                <strong>{solvedEntries.size}<span> / {totalWords}</span></strong>
+                <small>решено</small>
+              </div>
             </div>
 
-            <div className="fc-current-question" aria-live="polite">
-              <span className="fc-current-marker">{selectedEntry
-                ? `${String(selectedEntry.number).padStart(2, '0')}${selectedEntry.direction === 'across' ? '→' : '↓'}`
-                : '—'}</span>
-              <p>{selectedEntry?.clue || 'Выбери вопрос или клетку на поле'}</p>
-              {selectedEntry ? <span className="fc-current-length">{selectedEntry.word.length} букв</span> : null}
+            <div className="fc-active-clue">
+              <div className="fc-active-top">
+                <span className="fc-active-number">
+                  {selectedEntry ? `№ ${selectedEntry.number} · ${selectedEntry.direction === 'across' ? 'по горизонтали' : 'по вертикали'}` : 'Выбери вопрос'}
+                </span>
+                <span className="fc-active-length">{selectedEntry?.word.length ?? 0} букв</span>
+              </div>
+              <p className="fc-clue-question" aria-live="polite">{selectedEntry?.clue || 'Выбери слово в списке вопросов.'}</p>
+              {isCompact && <div className="fc-word-navigation">
+                <button type="button" onClick={() => pickNearby(-1)} aria-label="Предыдущее слово"><ChevronLeft size={19} /> Назад</button>
+                <span>{Math.max(1,currentIndex+1)} / {totalWords}</span>
+                <button type="button" onClick={() => pickNearby(1)} aria-label="Следующее слово">Дальше <ChevronRight size={19} /></button>
+              </div>}
             </div>
 
-            <div className="fc-board-grid">
-              <CrosswordGrid
-                userAnswers={userAnswers}
+            {isCompact && selectedEntry ? (
+              <MobileAnswer
+                entry={selectedEntry}
+                answers={userAnswers}
                 solvedEntries={solvedEntries}
+                revealedCells={revealedCells}
                 invalidCells={invalidCells}
                 onCellChange={handleCellChange}
-                onEntrySelect={handleEntrySelect}
-                selectedEntryId={selectedEntryId}
-                revealedCells={revealedCells}
+                onNext={() => pickNearby(1)}
               />
-            </div>
-
-            <div className="fc-board-scroller-hint"><MoveHorizontal size={14} /><span>На небольшом экране поле можно двигать по горизонтали</span></div>
+            ) : !isCompact ? (
+              <div className="fc-board-grid">
+                <CrosswordGrid
+                  userAnswers={userAnswers}
+                  solvedEntries={solvedEntries}
+                  invalidCells={invalidCells}
+                  onCellChange={handleCellChange}
+                  onEntrySelect={handleEntrySelect}
+                  selectedEntryId={selectedEntryId}
+                  revealedCells={revealedCells}
+                />
+              </div>
+            ) : null}
 
             <div className="fc-board-toolbar">
-              <div className="fc-board-stats">
-                <div><span>СЛОВА</span><strong>{String(solvedEntries.size).padStart(2, '0')}<em> / {totalWords}</em></strong></div>
-                <div><span>СЧЁТ</span><strong>{score.toLocaleString('ru-RU')}</strong></div>
+              <div className="fc-board-score">
+                <span>Счёт</span><strong>{(hasStarted ? score : 0).toLocaleString('ru-RU')}</strong>
               </div>
               <div className="fc-board-actions">
-                <button type="button" className="fc-btn fc-btn-check" onClick={handleCheck} title="Проверить заполненные клетки">
-                  <ShieldCheck size={17} /><span>Проверить</span>
+                <button type="button" className="fc-action fc-action-secondary" onClick={handleHint} title="Открыть букву в выбранном слове">
+                  <Lightbulb size={17} /> Подсказка
                 </button>
-                <button type="button" className="fc-btn fc-btn-hint" onClick={handleHint} title="Открыть одну букву в выбранном слове">
-                  <Lightbulb size={17} /><span>Подсказка</span>
-                  {hintUsed > 0 ? <small>{hintUsed}</small> : null}
+                <button type="button" className="fc-action fc-action-primary" onClick={handleCheck} title="Проверить заполненные буквы">
+                  <ShieldCheck size={17} /> Проверить
                 </button>
               </div>
             </div>
+
             <AnimatePresence>
-              {checkFeedback ? (
-                <motion.div
-                  key={checkFeedback.message}
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  role="status"
-                  className={`fc-feedback fc-feedback-${checkFeedback.tone}`}
-                >
-                  {checkFeedback.message}
-                </motion.div>
-              ) : null}
+              {checkFeedback && <motion.div key={checkFeedback.message}
+                initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                role="status" className={`fc-feedback fc-feedback-${checkFeedback.tone}`}>{checkFeedback.message}</motion.div>}
             </AnimatePresence>
+
+            {isCompact && <div className="fc-mobile-tools">
+              <button type="button" onClick={() => { setActivePanel('clues'); setDrawerOpen(true); }}>
+                <List size={19} /> Все вопросы
+              </button>
+              <button type="button" onClick={() => { setActivePanel('theory'); setDrawerOpen(true); }}>
+                <BookOpen size={19} /> Теория {solvedEntries.size > 0 ? `(${solvedEntries.size})` : ''}
+              </button>
+              <button type="button" onClick={() => setShowMap(v => !v)} aria-expanded={showMap}>
+                <MapIcon size={19} /> {showMap ? 'Скрыть карту' : 'Карта'}
+              </button>
+            </div>}
+            {isCompact && showMap && <div className="fc-mobile-overview">
+              <div className="fc-overview-heading"><strong>Весь кроссворд</strong><span>Синим выделено выбранное слово</span></div>
+              <GridOverview selectedEntryId={selectedEntryId} solvedEntries={solvedEntries} answers={userAnswers} />
+            </div>}
           </section>
 
-          <aside className="fc-reference" aria-label="Вопросы и теория">
+          {!isCompact && <aside className="fc-reference" aria-label="Вопросы и теория">
             <div className="fc-reference-heading">
-              <span className="fc-small-label">02 / СПРАВОЧНИК</span>
-              <span className="fc-reference-count">{String(totalWords).padStart(2, '0')} ТЕРМИНОВ</span>
+              <strong>Вопросы и ответы</strong><span>20 слов</span>
             </div>
-            <div className="fc-reference-tabs" role="tablist" aria-label="Выбор справочного раздела">
-              <button type="button" role="tab" aria-selected={activePanel === 'clues'} className={activePanel === 'clues' ? 'is-active' : ''} onClick={() => setActivePanel('clues')}>
-                <ListOrdered size={17} /> Вопросы
-              </button>
-              <button type="button" role="tab" aria-selected={activePanel === 'theory'} className={activePanel === 'theory' ? 'is-active' : ''} onClick={() => setActivePanel('theory')}>
-                <BookOpenText size={17} /> Теория <span>{solvedEntries.size}</span>
-              </button>
-            </div>
-            <div className="fc-reference-content" role="tabpanel" aria-label={activePanel === 'clues' ? 'Список вопросов' : 'Открытая теория'}>
-              {activePanel === 'clues' ? (
-                <CluesList
-                  selectedEntryId={selectedEntryId}
-                  solvedEntries={solvedEntries}
-                  onSelectEntry={(id) => {
-                    handleEntrySelect(id);
-                    if (window.innerWidth <= 1020) {
-                      document.querySelector('.fc-board')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                  }}
-                />
-              ) : (
-                <TheorySidebar solvedEntries={solvedEntries} selectedEntryId={selectedEntryId} />
-              )}
-            </div>
-          </aside>
+            {reference}
+          </aside>}
         </div>
 
-        <div className="fc-outro">
-          <div>
-            <span className="fc-small-label">03 / НА ЗАМЕТКУ</span>
-            <h2>Понимать рынок<br /><i>интереснее, чем угадывать.</i></h2>
-          </div>
-          <p>Кроссворд — это только начало. После каждого правильного ответа в разделе «Теория» открывается объяснение термина. Можно возвращаться к ним в любой момент.</p>
-          <ArrowUpRight size={25} strokeWidth={1.5} aria-hidden="true"/>
+        <div className="fc-under-game">
+          <CheckCircle2 size={17} aria-hidden="true"/>
+          <p>Прогресс сохраняется автоматически. После разгаданного слова откроется его объяснение во вкладке «Теория».</p>
         </div>
       </main>
 
-      <footer className="fc-footer">
-        <span>FINCROSS — A FINANCIAL LITERACY PUZZLE</span>
-        <span>Прогресс сохраняется в браузере <span aria-hidden="true">●</span> 2026</span>
-      </footer>
-
-      <AnimatePresence>
-        {showKeyboardTip ? (
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 15 }}
-            className="fc-keyboard-tip"
-          >
-            <Keyboard size={16} /><span>Повторное нажатие на клетку меняет направление слова</span>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+      {isCompact && drawerOpen && <div className="fc-drawer-backdrop" onMouseDown={(event) => {
+        if (event.target === event.currentTarget) setDrawerOpen(false);
+      }}>
+        <section className="fc-drawer" role="dialog" aria-modal="true" aria-label="Список вопросов и теория">
+          <div className="fc-drawer-header">
+            <strong>Справочник</strong>
+            <button type="button" className="fc-drawer-close" onClick={() => setDrawerOpen(false)} aria-label="Закрыть справочник"><X size={23}/></button>
+          </div>
+          {reference}
+        </section>
+      </div>}
 
       <VictoryModal
-        isVisible={showVictory}
-        score={score}
-        elapsedLabel={formatElapsed(elapsedSeconds)}
-        accuracy={accuracy}
-        hintUsed={hintUsed}
-        checkCount={checkCount}
-        onReset={handleReset}
+        isVisible={showVictory} score={score} elapsedLabel={formatElapsed(elapsedSeconds)}
+        accuracy={accuracy} hintUsed={hintUsed} checkCount={checkCount} onReset={handleReset}
       />
     </div>
   );
 }
+
 
 function pluralize(value: number, one: string, few: string, many: string): string {
   const mod10 = value % 10;
