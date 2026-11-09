@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lightbulb, ShieldCheck, List, BookOpen, ChevronLeft, ChevronRight, X, LocateFixed, ZoomIn, ZoomOut, CheckCircle2 } from 'lucide-react';
+import { Lightbulb, ShieldCheck, List, BookOpen, ChevronLeft, ChevronRight, X, LocateFixed, ZoomIn, ZoomOut, CheckCircle2, RotateCcw, Sparkles } from 'lucide-react';
 
 import Header from './components/Header';
 import CrosswordGrid from './components/CrosswordGrid';
@@ -78,7 +78,11 @@ export default function App() {
   const [hasStarted, setHasStarted] = useState(false);
   const [checkFeedback, setCheckFeedback] = useState<CheckFeedback | null>(null);
   const [activePanel, setActivePanel] = useState<'clues' | 'theory'>('clues');
-  const [isCompact, setIsCompact] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 850px)').matches);
+  const [isCompact, setIsCompact] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 1160px)').matches);
+  const [screen, setScreen] = useState(() => ({
+    width: typeof window === 'undefined' ? 1440 : window.innerWidth,
+    height: typeof window === 'undefined' ? 900 : window.innerHeight,
+  }));
   const [cellZoom, setCellZoom] = useState(44);
   const [recenterSignal, setRecenterSignal] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -127,11 +131,18 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 850px)');
-    const sync = () => setIsCompact(mq.matches);
+    const mq = window.matchMedia('(max-width: 1160px)');
+    const sync = () => {
+      setIsCompact(mq.matches);
+      setScreen({ width: window.innerWidth, height: window.innerHeight });
+    };
     sync();
     mq.addEventListener('change', sync);
-    return () => mq.removeEventListener('change', sync);
+    window.addEventListener('resize', sync, { passive: true });
+    return () => {
+      mq.removeEventListener('change', sync);
+      window.removeEventListener('resize', sync);
+    };
   }, []);
 
   useEffect(() => {
@@ -316,6 +327,13 @@ export default function App() {
 
   const totalWords = CROSSWORD_ENTRIES.length;
   const progress = Math.round((solvedEntries.size / totalWords) * 100);
+  // A 19-row puzzle should fit in a normal desktop viewport without scrolling.
+  // Reserve the header, title, board bar, and action rail before sizing cells.
+  const desktopCellSize = Math.max(20, Math.min(
+    32,
+    Math.floor((screen.height - 285) / 19) - 2,
+    Math.floor((screen.width - 470) / 26) - 2
+  ));
   const currentIndex = CROSSWORD_ENTRIES.findIndex(e => e.id === selectedEntryId);
   const pickNearby = (direction: -1 | 1) => {
     const next = (currentIndex + direction + totalWords) % totalWords;
@@ -352,18 +370,37 @@ export default function App() {
     </>
   );
 
+  const activeClue = (
+    <div className={isCompact ? "fc-active-clue" : "fc-side-current"}>
+      <div className="fc-active-top">
+        <span className="fc-active-number">
+          {selectedEntry ? `№ ${String(selectedEntry.number).padStart(2, '0')} · ${selectedEntry.direction === 'across' ? 'Горизонталь' : 'Вертикаль'}` : 'Выбери слово'}
+        </span>
+        <span className="fc-active-length">{selectedEntry?.word.length ?? 0} букв</span>
+      </div>
+      <p className="fc-clue-question" aria-live="polite">
+        {selectedEntry?.clue || 'Выбери вопрос из списка.'}
+      </p>
+      {isCompact && <div className="fc-word-navigation">
+        <button type="button" onClick={() => pickNearby(-1)} aria-label="Предыдущее слово"><ChevronLeft size={19} /> Назад</button>
+        <span>{Math.max(1, currentIndex + 1)} / {totalWords}</span>
+        <button type="button" onClick={() => pickNearby(1)} aria-label="Следующее слово">Дальше <ChevronRight size={19} /></button>
+      </div>}
+    </div>
+  );
+
   return (
     <div className="fc-app">
-      <Header solvedCount={solvedEntries.size} score={score} elapsedLabel={formatElapsed(elapsedSeconds)} onReset={resetWithConfirmation} />
+      <Header solvedCount={solvedEntries.size} elapsedLabel={formatElapsed(elapsedSeconds)} />
       <main className="fc-main" id="play">
         <div className="fc-page-heading">
-          <div>
-            <h1>Финансовый кроссворд<span>.</span></h1>
-            <p>20 понятий о рынке, деньгах и инвестициях. Выбери слово и найди ответ.</p>
+          <div className="fc-headline-group">
+            <span className="fc-issue-tag"><Sparkles size={14} aria-hidden="true" /> ИГРА, В КОТОРОЙ СХОДЯТСЯ СЛОВА</span>
+            <h1>Разгадай <span>рынок</span></h1>
           </div>
-          <div className="fc-heading-progress">
-            <strong>{progress}%</strong>
-            <span>пройдено</span>
+          <div className="fc-heading-aside">
+            <span>20 финансовых терминов</span>
+            <strong>{progress}% собрано</strong>
           </div>
         </div>
 
@@ -371,29 +408,15 @@ export default function App() {
           <section className="fc-board" aria-label="Финансовый кроссворд">
             <div className="fc-board-heading">
               <div className="fc-board-title-wrap">
-                <span className="fc-board-eyebrow">Игровое поле</span>
-                <h2>Кроссворд</h2>
+                <span className="fc-board-index">КРОССВОРД / № 01</span>
               </div>
               <div className="fc-board-stat">
-                <strong>{solvedEntries.size}<span> / {totalWords}</span></strong>
-                <small>решено</small>
+                <span>СОБРАНО СЛОВ</span>
+                <strong>{String(solvedEntries.size).padStart(2,'0')}<em> / {totalWords}</em></strong>
               </div>
             </div>
 
-            <div className="fc-active-clue">
-              <div className="fc-active-top">
-                <span className="fc-active-number">
-                  {selectedEntry ? `№ ${selectedEntry.number} · ${selectedEntry.direction === 'across' ? 'по горизонтали' : 'по вертикали'}` : 'Выбери вопрос'}
-                </span>
-                <span className="fc-active-length">{selectedEntry?.word.length ?? 0} букв</span>
-              </div>
-              <p className="fc-clue-question" aria-live="polite">{selectedEntry?.clue || 'Выбери слово в списке вопросов.'}</p>
-              {isCompact && <div className="fc-word-navigation">
-                <button type="button" onClick={() => pickNearby(-1)} aria-label="Предыдущее слово"><ChevronLeft size={19} /> Назад</button>
-                <span>{Math.max(1,currentIndex+1)} / {totalWords}</span>
-                <button type="button" onClick={() => pickNearby(1)} aria-label="Следующее слово">Дальше <ChevronRight size={19} /></button>
-              </div>}
-            </div>
+            {isCompact && activeClue}
 
             {isCompact && <div className="fc-zoom-bar">
               <p>Перемещайте сетку пальцем. Нажмите на клетку, чтобы ввести букву.</p>
@@ -413,14 +436,14 @@ export default function App() {
                 selectedEntryId={selectedEntryId}
                 revealedCells={revealedCells}
                 compact={isCompact}
-                cellSize={isCompact ? cellZoom : 32}
+                cellSize={isCompact ? cellZoom : desktopCellSize}
                 recenterSignal={recenterSignal}
               />
             </div>
 
             <div className="fc-board-toolbar">
               <div className="fc-board-score">
-                <span>Счёт</span><strong>{(hasStarted ? score : 0).toLocaleString('ru-RU')}</strong>
+                <span>НАБРАНО ОЧКОВ</span><strong>{(hasStarted ? score : 0).toLocaleString('ru-RU')}</strong>
               </div>
               <div className="fc-board-actions">
                 <button type="button" className="fc-action fc-action-secondary" onClick={handleHint} title="Открыть букву в выбранном слове">
@@ -452,16 +475,19 @@ export default function App() {
           </section>
 
           {!isCompact && <aside className="fc-reference" aria-label="Вопросы и теория">
+            {activeClue}
             <div className="fc-reference-heading">
-              <strong>Вопросы и ответы</strong><span>20 слов</span>
+              <strong>Подсказки к словам</strong><span>лист №01</span>
             </div>
             {reference}
           </aside>}
         </div>
 
         <div className="fc-under-game">
-          <CheckCircle2 size={17} aria-hidden="true"/>
-          <p>Прогресс сохраняется автоматически. После разгаданного слова откроется его объяснение во вкладке «Теория».</p>
+          <span><CheckCircle2 size={17} aria-hidden="true" /> Прогресс сохраняется сам. Разгадай слово — откроешь его объяснение.</span>
+          <button type="button" className="fc-restart-link" onClick={resetWithConfirmation} aria-label="Начать кроссворд заново">
+            <RotateCcw size={14} /> Начать заново
+          </button>
         </div>
       </main>
 

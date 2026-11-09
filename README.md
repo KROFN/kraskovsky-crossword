@@ -26,3 +26,25 @@ Game-first интерфейс: вопрос и ввод ответа наход�
 ## Регрессионная проверка
 
 Проверять ширины **320, 390, 768, 1024, 1440 px**, отсутствие горизонтального overflow, правильный ввод кириллицы, переходы между словами, пересечения, подсказку, проверку, открытие теории после решения, сохранение и восстановление прогресса, сброс и финальный экран. Проверка `npm run typecheck && npm run build` — необходима, но не заменяет браузерные UX-тесты.
+
+## Visual refresh (2026-11-09)
+
+The UI was redesigned against references from the real puzzle/game category,
+not generic SaaS dashboard templates:
+
+- **Puzzmo** (https://www.puzzmo.com/) — the crossword itself as the central visual
+  object, expressive puzzle masthead, clear active word and clue relationship.
+- **Cross|word** (https://www.sfgate.com/puzzles/article/crossword-19367635.php) —
+  clean grid/clue pairing and highlighted active answer.
+- **One Page Love** (https://onepagelove.com/concept-capers/) — playful game
+  identity without a neon/dashboard aesthetic.
+
+Design direction: a warm puzzle zine with dark ink, maize and coral. The graphic
+symbol is an intersection of five crossword cells (not an initial/lettermark),
+and is reused as the favicon. The desktop board resizes its cell size to fit
+19 rows in common 768–900px-tall browser windows. Reset lives below the game,
+not as a visually dominant rightmost header action.
+
+Screenshot: `public/desktop-preview.webp` is generated with a few sample
+answers stored in session-local browser state. It is a design preview, not a
+claim about real player progress.

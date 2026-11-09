@@ -1,400 +1,365 @@
 @import "tailwindcss";
 
-/* FINCROSS — game-first interface, one primary action hierarchy. */
+/* FINCROSS / puzzle-zine design system.
+   Intentionally playful: printed game-card surfaces, warm accents, solid grid geometry.
+   The crossword is the main artwork, not a marketing hero. */
 :root {
-  font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
-  color: #172832;
-  background: #f5f6f4;
+  font-family: "Golos Text", "IBM Plex Sans", sans-serif;
+  color: #213930;
+  background: #eff2e9;
   font-synthesis: none;
+  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-
-  --ink: #172832;
-  --muted: #52636c;
-  --subtle: #687982;
-  --line: #d9e1df;
-  --surface: #ffffff;
-  --canvas: #f5f6f4;
-  --blue: #315fe8;
-  --blue-hover: #2449bc;
-  --blue-tint: #e9eeff;
-  --solved: #d1eadc;
-  --error: #b9344d;
+  --fc-ink: #213930;
+  --fc-deep: #17352d;
+  --fc-text: #28443a;
+  --fc-muted: #55695e;
+  --fc-paper: #fffdf4;
+  --fc-bg: #eff2e9;
+  --fc-yellow: #f9d977;
+  --fc-yellow-soft: #fff1bf;
+  --fc-coral: #ed8065;
+  --fc-line: #d0dccf;
+  --fc-complete: #b3dfc0;
 }
-*, *::before, *::after { box-sizing: border-box; }
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body { margin: 0; min-width: 280px; }
 button, input { font: inherit; }
 button { cursor: pointer; }
-button:focus-visible, a:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
-::selection { background: #cddaff; color: #162d65; }
+button:focus-visible, a:focus-visible { outline: 3px solid #ed8065; outline-offset: 3px; }
+::selection { background: var(--fc-yellow); color: var(--fc-ink); }
 
-.fc-app { min-height: 100vh; }
-.fc-header {
-  background: var(--surface);
-  border-bottom: 1px solid var(--line);
+.fc-app {
+  min-height: 100vh;
+  background-color: var(--fc-bg);
+  background-image: radial-gradient(#4f67500a 0.9px, transparent 0.9px);
+  background-size: 18px 18px;
 }
+
+/* Masthead — no floating action button and no letter-based logo. */
+.fc-header { background: var(--fc-deep); border-bottom: 4px solid var(--fc-yellow); color: #fff9e6; }
 .fc-header-inner {
-  max-width: 1392px;
-  min-height: 70px;
-  margin: 0 auto;
-  padding: 0 26px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
+  max-width: 1470px; min-height: 64px; margin: auto; padding: 6px 27px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
 }
-.fc-identity { display: flex; align-items: center; gap: 11px; }
-.fc-mark {
-  background: var(--blue);
-  border-radius: 11px;
-  width: 42px; height: 42px;
-  display: grid;
-  place-items: center;
-  color: white;
-  font-weight: 750;
-  font-size: 24px;
-  letter-spacing: -.07em;
+.fc-identity { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.fc-logo-symbol { width: 49px; height: 49px; flex: 0 0 auto; filter: drop-shadow(2px 2px 0 #0e2720); }
+.fc-identity-wordmark { display: grid; align-content: center; gap: 1px; }
+.fc-identity-wordmark strong {
+  font: 750 19px/1.15 "Unbounded", "Golos Text", sans-serif;
+  letter-spacing: -.075em; white-space: nowrap;
 }
-.fc-mark span { color: #a8bdff; }
-.fc-identity > div { display: grid; gap: 1px; }
-.fc-identity strong { font-weight: 750; font-size: 17px; letter-spacing: -.04em; line-height: 1.2; }
-.fc-identity small { color: var(--muted); font-size: 11px; }
-.fc-header-status { margin-left: auto; display: flex; align-items: center; gap: 24px; }
-.fc-header-timer {
-  display: inline-flex; gap: 7px; align-items: center;
-  color: var(--muted);
-  font-family: "IBM Plex Mono", monospace;
+.fc-identity-wordmark strong span { color: var(--fc-yellow); }
+.fc-identity-wordmark small {
+  font: 650 9px/1.3 "IBM Plex Mono", monospace;
+  color: #c4d8bd; letter-spacing: .075em;
+}
+.fc-header-status { margin-left: auto; display: flex; align-items: center; gap: 22px; }
+.fc-header-time {
+  display: inline-flex; align-items: center; gap: 7px;
+  font: 600 14px "IBM Plex Mono", monospace; color: #e8f0dc;
   font-variant-numeric: tabular-nums;
-  font-size: 13px;
 }
-.fc-header-progress { display: flex; align-items: center; gap: 11px; min-width: 160px; }
-.fc-header-progress strong {
-  font: 600 15px "IBM Plex Mono", monospace;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-.fc-header-progress strong span { font-weight: 400; color: var(--muted); }
-.fc-progress-track { width: 115px; height: 6px; background: #e8eaea; border-radius: 6px; overflow: hidden; }
-.fc-progress-track span { background: var(--blue); display: block; height: 100%; border-radius: 6px; transition: width .2s ease; }
-.fc-reset-button {
-  border: 1px solid var(--line);
-  color: var(--ink); background: var(--surface);
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  min-height: 42px; padding: 0 13px; border-radius: 10px;
-  font-size: 13px; font-weight: 600;
-}
-.fc-reset-button:hover { background: #eef1f4; border-color: #bdcad0; }
+.fc-header-time svg { color: var(--fc-yellow); }
+.fc-header-divider { height: 27px; width: 1px; background: #5e7767; }
+.fc-header-count { display: flex; align-items: baseline; gap: 6px; white-space: nowrap; }
+.fc-header-count strong { font: 750 22px "Unbounded", sans-serif; letter-spacing: -.08em; color: var(--fc-yellow); }
+.fc-header-count span { font: 500 13px "IBM Plex Mono", monospace; color: #b9cab8; }
 
-.fc-main { max-width: 1392px; margin: 0 auto; padding: 23px 26px 50px; }
-.fc-page-heading {
-  display: flex; justify-content: space-between; align-items: center;
-  gap: 26px; margin: 0 0 22px;
+/* Very short heading: the board belongs to the opening viewport. */
+.fc-main { max-width: 1470px; margin: 0 auto; padding: 17px 27px 25px; }
+.fc-page-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+.fc-headline-group { display: flex; align-items: center; gap: 18px; min-width: 0; }
+.fc-issue-tag {
+  display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+  font: 700 10px "IBM Plex Mono", monospace; letter-spacing: .025em;
+  background: #f2dca7; border: 1px solid #b9a16f; padding: 7px 10px;
+  color: var(--fc-deep); transform: rotate(-1.5deg);
 }
+.fc-issue-tag svg { color: #bd5741; }
 .fc-page-heading h1 {
-  margin: 0; font-weight: 750;
-  font-size: clamp(27px, 2.6vw, 38px);
-  letter-spacing: -.048em; line-height: 1.15;
+  margin: 0; font: 650 clamp(22px, 2.35vw, 32px)/1.2 "Unbounded", "Golos Text", sans-serif;
+  letter-spacing: -.068em; white-space: nowrap;
 }
-.fc-page-heading h1 span { color: var(--blue); }
-.fc-page-heading p { margin: 8px 0 0; color: var(--muted); line-height: 1.5; font-size: 14px; }
-.fc-heading-progress { display: grid; gap: 0; text-align: right; color: var(--blue); }
-.fc-heading-progress strong { font: 600 28px "IBM Plex Mono", monospace; letter-spacing: -.07em; }
-.fc-heading-progress span { font-size: 12px; color: var(--muted); }
+.fc-page-heading h1 span { position: relative; z-index: 0; }
+.fc-page-heading h1 span::after {
+  content: ""; position: absolute; left: 1px; right: -2px; bottom: 0px; height: 6px;
+  background: var(--fc-coral); transform: rotate(-1.2deg); z-index: -1; opacity: .7;
+}
+.fc-heading-aside { display: flex; align-items: center; gap: 14px; font-size: 12px; color: var(--fc-muted); white-space: nowrap; }
+.fc-heading-aside strong { font-weight: 750; background: #e3eedc; padding: 6px 9px; border-radius: 4px; color: #274a36; }
 
-.fc-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 345px; gap: 18px; align-items: start; }
-.fc-board, .fc-reference { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; min-width: 0; }
-.fc-board { overflow: hidden; }
+/* Puzzle and clue sheet sit shoulder to shoulder; playful paper/ink contrast. */
+.fc-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 354px; gap: 17px; align-items: start; }
+.fc-board {
+  min-width: 0; overflow: hidden; background: var(--fc-paper);
+  border: 2px solid var(--fc-ink); border-radius: 6px;
+  box-shadow: 5px 5px 0 rgba(42, 83, 58, .15);
+}
 .fc-board-heading {
-  display: flex; align-items: center; justify-content: space-between; gap: 18px;
-  padding: 21px 26px 17px; border-bottom: 1px solid #e9edeb;
+  min-height: 51px; display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 18px; background: var(--fc-yellow);
+  border-bottom: 2px solid var(--fc-ink);
 }
-.fc-board-eyebrow { display: block; font-size: 12px; color: var(--subtle); margin-bottom: 4px; font-weight: 600; }
-.fc-board-heading h2 { margin: 0; font-size: 22px; line-height: 1.2; letter-spacing: -.035em; font-weight: 750; }
-.fc-board-stat { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
-.fc-board-stat strong { font: 650 18px "IBM Plex Mono", monospace; letter-spacing: -.05em; }
-.fc-board-stat strong span { color: var(--subtle); font-weight: 400; }
-.fc-board-stat small { color: var(--muted); font-size: 12px; }
+.fc-board-index {
+  font: 750 12px "Unbounded", "Golos Text", sans-serif; letter-spacing: -.02em; color: var(--fc-ink);
+}
+.fc-board-stat { display: flex; align-items: center; gap: 9px; }
+.fc-board-stat > span { font: 700 9px "IBM Plex Mono", monospace; letter-spacing: .04em; color: #496042; }
+.fc-board-stat strong { font: 750 16px "IBM Plex Mono",monospace; color: var(--fc-deep); white-space: nowrap; }
+.fc-board-stat strong em { font-style: normal; font-weight: 500; opacity: .68; }
 
-.fc-active-clue { margin: 20px 26px 0; border-left: 4px solid var(--blue); padding: 9px 0 9px 17px; min-height: 85px; }
-.fc-active-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-.fc-active-number { color: var(--blue-hover); font-size: 13px; font-weight: 750; }
-.fc-active-length { font-size: 12px; color: var(--subtle); white-space: nowrap; }
-.fc-clue-question { margin: 7px 0 0; line-height: 1.52; font-size: 17px; font-weight: 600; max-width: 720px; }
-
-.fc-board-grid { padding: 5px 18px 14px; }
-.fc-grid-viewport { width: 100%; overflow: auto hidden; scrollbar-width: thin; scrollbar-color: #a1abb5 transparent; }
-.fc-grid-center { width: max-content; min-width: 100%; display: flex; justify-content: center; padding: 14px 8px 18px; }
-.fc-grid-inner { position: relative; }
+/* Crossword: negative space has real blocks instead of empty web whitespace. */
+.fc-board-grid { padding: 7px 13px 8px; min-width: 0; }
+.fc-grid-viewport { width: 100%; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; scrollbar-color: #93a99c transparent; }
+.fc-grid-center { width: max-content; min-width: 100%; display: flex; justify-content: center; padding: 2px 0; }
+.fc-grid-inner { position: relative; background: #d6e1d2; border: 1px solid #6d8671; outline: 3px solid #f1f3e8; }
+.fc-grid-inner > div:not(.fc-cell) { background: #d2dfce; }
+/* Make the grid cells read as physical tiles, never generic form fields. */
 .fc-cell {
-  display: flex; justify-content: center; align-items: center;
-  position: relative; cursor: text; user-select: none;
-  border-radius: 3px; border: 1px solid #bac9cb;
-  background: #f8faf9; color: var(--ink);
-  transition: background .09s, border-color .09s;
+  display: flex; justify-content: center; align-items: center; position: relative;
+  background: #fffef7; border: 1px solid #587266; border-radius: 0;
+  color: var(--fc-ink); cursor: text; user-select: none;
+  transition: background .12s ease, border-color .12s ease;
 }
 .fc-cell.is-filled { background: #fff; }
-.fc-cell.is-highlighted { background: var(--blue-tint); border-color: #9eb3f4; }
-.fc-cell.is-focused { background: var(--blue); border-color: var(--blue); color: white; z-index: 2; }
-.fc-cell.is-focused .fc-cell-letter, .fc-cell.is-focused .fc-cell-number { color: white !important; }
-.fc-cell.is-solved { background: var(--solved); border-color: #7cae94; }
-.fc-cell.is-revealed { background: #d8e3ff; border-color: #8aa6f7; }
-.fc-cell.is-invalid { background: #ffe8eb; border-color: var(--error); }
-.fc-cell-number { position: absolute; left: 2px; top: 2px; line-height: 1; font-weight: 700; color: #516578; pointer-events: none; }
-.fc-cell-letter { font-family: "IBM Plex Sans",sans-serif; font-weight: 750; line-height: 1; pointer-events: none; }
+.fc-cell.is-highlighted { background: #ffe6a1; border-color: #bb9c55; }
+.fc-cell.is-focused { background: var(--fc-coral); border: 2px solid var(--fc-ink); z-index: 2; }
+.fc-cell.is-focused .fc-cell-letter, .fc-cell.is-focused .fc-cell-number { color: #1f332a !important; }
+.fc-cell.is-solved { background: var(--fc-complete); border-color: #659676; }
+.fc-cell.is-revealed { background: #dfedcb; border-color: #82aa80; }
+.fc-cell.is-invalid { background: #ffd3c6; border-color: #b74840; }
+.fc-cell-number { position: absolute; left: 2px; top: 1px; font-weight: 800; line-height: 1; color: #536656; pointer-events: none; }
+.fc-cell-letter { font-family: "Golos Text", sans-serif; font-weight: 800; line-height: 1; pointer-events: none; color: #254235; }
+.fc-cell input { caret-color: transparent; }
 .fc-cell input:focus-visible { outline: none; }
 
 .fc-board-toolbar {
-  display: flex; align-items: center; justify-content: space-between; gap: 20px;
-  border-top: 1px solid #e8edec; padding: 18px 26px;
+  min-height: 64px; border-top: 2px solid #d5ddcb;
+  background: #f7f8ed; display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; padding: 9px 18px;
 }
-.fc-board-score { display: grid; gap: 2px; }
-.fc-board-score span { color: var(--muted); font-size: 12px; }
-.fc-board-score strong { font: 650 19px "IBM Plex Mono",monospace; }
-.fc-board-actions { display: flex; align-items: center; gap: 10px; }
+.fc-board-score { display: flex; align-items: baseline; gap: 9px; }
+.fc-board-score span { font: 700 9px "IBM Plex Mono", monospace; letter-spacing: .025em; color: #6d806d; }
+.fc-board-score strong { font: 700 19px "Unbounded", sans-serif; letter-spacing: -.07em; }
+.fc-board-actions { display: flex; align-items: center; gap: 8px; }
 .fc-action {
-  min-height: 45px; padding: 0 18px; display: inline-flex; align-items: center; justify-content: center; gap: 9px;
-  border-radius: 10px; border: 1px solid var(--line);
-  font-weight: 700; font-size: 14px;
-}
-.fc-action-secondary { background: #fff; color: var(--ink); }
-.fc-action-secondary:hover { background: #eef2f3; }
-.fc-action-primary { background: var(--blue); border-color: var(--blue); color: #fff; }
-.fc-action-primary:hover { background: var(--blue-hover); }
-.fc-feedback { margin: 0 26px 18px; padding: 13px 15px; font-size: 13px; line-height: 1.5; border-radius: 10px; }
-.fc-feedback-success { background: #e5f4e9; color: #23583a; }
-.fc-feedback-error { background: #ffeaed; color: #8f1f33; }
-.fc-feedback-neutral { background: #eaf0fc; color: #24468d; }
-
-.fc-reference { overflow: hidden; position: sticky; top: 18px; }
-.fc-reference-heading {
-  padding: 22px 20px 17px; display: flex; justify-content: space-between; align-items: center; gap: 10px;
-}
-.fc-reference-heading strong { font-size: 17px; font-weight: 750; letter-spacing: -.02em; }
-.fc-reference-heading span { font-size: 13px; color: var(--muted); }
-.fc-reference-tabs { display: flex; gap: 6px; padding: 0 13px 12px; border-bottom: 1px solid var(--line); }
-.fc-reference-tabs button {
-  flex: 1; min-height: 43px; border: none; background: transparent; border-radius: 9px;
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  font-weight: 700; font-size: 14px; color: #5b6973;
+  min-height: 43px; padding: 0 16px; border-radius: 5px;
+  font: 750 13px "Golos Text", sans-serif; border: 1.5px solid var(--fc-ink);
+  transition: transform .12s ease, background .12s ease;
 }
-.fc-reference-tabs button.is-active { background: var(--blue-tint); color: #1d48bd; }
-.fc-reference-tabs button span { font-size: 12px; }
-.fc-reference-content { max-height: min(69vh, 840px); overflow-y: auto; overscroll-behavior: contain; padding: 16px 15px 20px; }
-.fc-clues { display: grid; gap: 22px; }
-.fc-clue-group-heading { display: flex; align-items: center; gap: 9px; padding: 0 6px 9px; }
-.fc-clue-group-icon { display: inline-flex; color: #556772; }
-.fc-clue-group-heading h3 { margin: 0; font-size: 14px; font-weight: 750; }
-.fc-clue-group-count { margin-left: auto; color: var(--subtle); font-size: 12px; }
-.fc-clue-stack { display: grid; gap: 4px; }
+.fc-action:hover { transform: translateY(-2px); }
+.fc-action-secondary { background: #fffdf4; color: var(--fc-ink); }
+.fc-action-secondary:hover { background: #fff0c1; }
+.fc-action-primary { background: #1f4133; color: #fffdf4; }
+.fc-action-primary:hover { background: #345c46; }
+.fc-feedback { margin: 4px 16px 11px; padding: 9px 12px; border: 1px solid; border-radius: 4px; font-size: 12px; }
+.fc-feedback-success { background: #e3f5e3; color: #226544; border-color: #b3d6b3; }
+.fc-feedback-error { background: #ffdfd9; color: #8e3a34; border-color: #e2b2a3; }
+.fc-feedback-neutral { background: #fff3cd; color: #6c5331; border-color: #e0c789; }
+
+/* Right-side clue sheet, like a companion to a printed puzzle. */
+.fc-reference {
+  min-width: 0; max-height: calc(100dvh - 150px);
+  display: flex; flex-direction: column;
+  background: var(--fc-paper); border: 2px solid var(--fc-ink);
+  border-radius: 6px; box-shadow: 4px 4px 0 rgba(42,83,58,.14);
+  overflow: hidden;
+}
+.fc-side-current {
+  color: #fff5df; background: var(--fc-deep);
+  min-height: 124px; padding: 16px 18px;
+  border-bottom: 3px solid var(--fc-coral);
+}
+.fc-active-top { display: flex; justify-content: space-between; align-items: center; gap: 9px; }
+.fc-active-number {
+  background: var(--fc-yellow); padding: 4px 7px;
+  font: 750 11px "IBM Plex Mono", monospace; color: var(--fc-deep);
+}
+.fc-active-length { font: 600 11px "IBM Plex Mono", monospace; opacity: .8; white-space: nowrap; }
+.fc-clue-question { margin: 13px 0 0; color: inherit; font-size: 16px; line-height: 1.4; font-weight: 650; }
+.fc-reference-heading { display: flex; justify-content: space-between; align-items: center; padding: 10px 17px 7px; }
+.fc-reference-heading strong { font: 750 12px "Unbounded", sans-serif; letter-spacing: -.03em; }
+.fc-reference-heading span { color: var(--fc-muted); font: 650 10px "IBM Plex Mono", monospace; }
+.fc-reference-tabs { display: flex; gap: 5px; padding: 0 12px 8px; border-bottom: 1px solid #cfdbc9; }
+.fc-reference-tabs button {
+  display: flex; flex: 1; align-items: center; justify-content: center; gap: 8px;
+  min-height: 38px; border: 1px solid transparent; border-radius: 3px;
+  background: transparent; color: #50675b; font-size: 13px; font-weight: 750;
+}
+.fc-reference-tabs button.is-active { background: var(--fc-yellow); color: var(--fc-deep); border-color: #cfb05c; }
+.fc-reference-tabs button span { font: 650 10px "IBM Plex Mono", monospace; }
+.fc-reference-content { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; scrollbar-color: #aac3a9 transparent; scrollbar-width: thin; padding: 10px 12px 15px; }
+.fc-clues { display: grid; gap: 15px; }
+.fc-clue-group-heading { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; padding: 0 5px; }
+.fc-clue-group-icon { color: #c5674e; }
+.fc-clue-group-heading h3 { margin: 0; font: 750 13px "Golos Text", sans-serif; }
+.fc-clue-group-count { margin-left: auto; color: #728574; font: 600 11px "IBM Plex Mono", monospace; }
+.fc-clue-stack { display: grid; gap: 2px; }
 .fc-clue-item {
-  width: 100%; min-height: 58px; border: 1px solid transparent; border-radius: 10px;
-  display: grid; grid-template-columns: 26px minmax(0,1fr) 18px; gap: 7px; align-items: start;
-  text-align: left; padding: 12px 10px; background: transparent; color: var(--ink);
+  display: grid; grid-template-columns: 28px minmax(0,1fr) 16px;
+  gap: 6px; text-align: left; align-items: start; width: 100%;
+  min-height: 51px; padding: 10px 8px;
+  border: 1px solid transparent; border-radius: 3px;
+  color: var(--fc-ink); background: transparent;
 }
-.fc-clue-item:hover { background: #f1f4f6; }
-.fc-clue-item.is-active { border-color: #b5c8ff; background: var(--blue-tint); }
-.fc-clue-number { color: var(--blue-hover); font-weight: 700; font-size: 13px; }
-.fc-clue-text { font-weight: 500; font-size: 13px; line-height: 1.48; }
-.fc-clue-item.is-solved .fc-clue-text { color: #426d56; text-decoration: line-through; text-decoration-color: #91ad97; }
-.fc-clue-check { color: #218358; }
-.fc-theory-intro { margin: 0 4px 16px; font-size: 13px; color: var(--muted); line-height: 1.6; }
-.fc-theory-list { display: grid; gap: 10px; }
-.fc-theory-card { border: 1px solid var(--line); border-radius: 12px; padding: 13px; background: #fff; }
-.fc-theory-card.is-unlocked { background: #f0f8f1; border-color: #bcd6c4; }
-.fc-theory-card.is-current { border-color: #9cb6fa; }
-.fc-theory-card-top { display: flex; justify-content: space-between; color: #557066; }
-.fc-theory-index { font: 600 12px "IBM Plex Mono",monospace; }
-.fc-theory-card h4 { margin: 8px 0 5px; font-size: 15px; }
-.fc-theory-card p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--muted); }
-.fc-theory-unlocked { display: flex; align-items: center; gap: 5px; margin-top: 12px; font-size: 12px; font-weight: 700; color: #24603f; }
-.fc-under-game { display: flex; align-items: center; gap: 10px; margin: 19px 4px 0; color: var(--muted); font-size: 13px; }
-.fc-under-game p { margin: 0; line-height: 1.5; }
-.fc-under-game svg { color: #238755; flex-shrink: 0; }
+.fc-clue-item:hover { background: #f1f2df; }
+.fc-clue-item.is-active { background: #fff0bb; border-color: #d7b763; }
+.fc-clue-number { color: #aa5240; font: 750 12px "IBM Plex Mono", monospace; }
+.fc-clue-text { font-size: 12px; line-height: 1.45; font-weight: 570; }
+.fc-clue-item.is-solved .fc-clue-text { color: #4d7963; text-decoration: line-through; }
+.fc-clue-check { color: #378866; }
+.fc-theory-intro { color: var(--fc-muted); font-size: 12px; line-height: 1.5; margin: 0 0 12px; }
+.fc-theory-empty { text-align: center; padding: 22px 15px 35px; }
+.fc-theory-empty-icon { margin: 0 auto 12px; width: 54px; height: 54px; display: grid; place-items: center; border-radius: 6px; background: #e1ebcf; color: #517a57; }
+.fc-theory-empty h3 { max-width: 220px; margin: 0 auto 9px; font-size: 17px; font-weight: 750; }
+.fc-theory-empty p { margin: auto; max-width: 250px; color: var(--fc-muted); font-size: 13px; line-height: 1.6; }
+.fc-theory-list { display: grid; gap: 7px; }
+.fc-theory-card { padding: 12px; background: #f4f5e9; border: 1px solid #d5e0cf; border-radius: 4px; }
+.fc-theory-card.is-current { border-color: #dfa662; }
+.fc-theory-card-top { display: flex; justify-content: space-between; color: #65836b; }
+.fc-theory-index { font: 700 11px "IBM Plex Mono", monospace; }
+.fc-theory-card h4 { margin: 9px 0 4px; font-size: 16px; font-weight: 750; }
+.fc-theory-card p { margin: 0; font-size: 13px; line-height: 1.55; color: var(--fc-muted); }
+.fc-theory-unlocked { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; font-size: 10px; font-weight: 750; color: #367855; }
 
-/* Compact screens have a separate, full-size word input — not 118 tiny inputs. */
-.fc-word-navigation { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 16px; }
+/* A quiet utility footer, not an action floating in the masthead. */
+.fc-under-game {
+  display: flex; align-items: center; justify-content: space-between; gap: 15px;
+  color: #556c56; font-size: 11px; margin: 13px 6px 0;
+}
+.fc-under-game > span { display: inline-flex; align-items: center; gap: 8px; }
+.fc-under-game svg { flex-shrink: 0; }
+.fc-restart-link {
+  flex-shrink: 0; display: inline-flex; align-items: center; gap: 7px;
+  border: none; color: #506654; background: none;
+  padding: 8px 5px; font-weight: 650; font-size: 11px;
+}
+.fc-restart-link:hover { text-decoration: underline; color: var(--fc-ink); }
+
+/* Phone/tablet keeps the same real 118-cell crossword, with two-axis pan. */
+.fc-active-clue { margin: 11px 14px 3px; background: #244539; color: #fff9e8; border-radius: 5px; padding: 13px 14px; }
+.fc-word-navigation { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 11px; }
 .fc-word-navigation button {
-  min-height: 44px; border: 1px solid var(--line); background: #fff;
-  display: flex; align-items: center; gap: 5px; border-radius: 9px; padding: 0 12px;
-  color: var(--ink); font-size: 13px; font-weight: 700;
+  display: inline-flex; gap: 6px; align-items: center; justify-content: center;
+  min-height: 41px; padding: 0 11px; background: #f9e2a8;
+  color: var(--fc-deep); border: 1px solid #ab924f; border-radius: 3px;
+  font-size: 12px; font-weight: 750;
 }
-.fc-word-navigation button:hover { background: #eff3fd; }
-.fc-word-navigation > span { color: var(--muted); font: 600 13px "IBM Plex Mono",monospace; }
-.fc-mobile-tools { display: flex; border-top: 1px solid var(--line); padding: 10px 14px; gap: 8px; }
-.fc-mobile-tools button {
-  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 5px; border: 0; border-radius: 9px; padding: 9px 4px;
-  min-height: 54px; color: #425966; background: transparent;
-  font-size: 11px; font-weight: 700;
+.fc-word-navigation > span { font: 650 11px "IBM Plex Mono", monospace; color: #c2d7be; }
+.fc-zoom-bar { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 10px 14px 2px; }
+.fc-zoom-bar p { font-size: 11px; line-height: 1.35; color: var(--fc-muted); margin: 0; max-width: 230px; }
+.fc-zoom-controls { flex-shrink: 0; display: flex; gap: 4px; align-items: center; }
+.fc-zoom-controls button { width: 42px; height: 42px; border: 1px solid #bbcab9; background: #eaf0df; border-radius: 4px; display: grid; place-items: center; }
+.fc-zoom-controls button:disabled { opacity: .45; cursor: default; }
+.fc-zoom-controls span { font: 700 11px "IBM Plex Mono", monospace; min-width: 36px; text-align: center; }
+.fc-grid-viewport.is-compact {
+  height: clamp(335px, 46dvh, 470px); overflow: auto;
+  overscroll-behavior: contain; touch-action: pan-x pan-y;
+  border: 1px solid #86a28b; scrollbar-width: thin;
+  background: #e1e9d8;
 }
-.fc-mobile-tools button:hover { background: #edf2fb; color: var(--blue); }
-/* Mobile question/theory drawer — a clear escape, no page-long scavenger hunt. */
-.fc-drawer-backdrop { position: fixed; inset: 0; z-index: 80; display: flex; align-items: flex-end; background: rgba(17,33,43,.42); }
-.fc-drawer { background: white; border-radius: 18px 18px 0 0; width: 100%; max-height: 88dvh; display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom, 0px); }
-.fc-drawer-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px 9px; }
-.fc-drawer-header strong { font-size: 19px; font-weight: 750; }
-.fc-drawer-close { display: grid; place-items: center; width: 44px; height: 44px; background: #f1f4f6; border: 0; border-radius: 11px; }
-.fc-drawer .fc-reference-tabs { flex-shrink: 0; padding: 0 14px 12px; }
-.fc-drawer .fc-reference-content { max-height: unset; min-height: 0; flex: 1; overflow-y: auto; padding-bottom: 30px; }
+.fc-grid-viewport.is-compact .fc-grid-center { padding: 8px; min-height: 100%; align-items: start; }
+.fc-grid-viewport.is-compact .fc-cell { border-width: 1.5px; }
+.fc-grid-viewport.is-compact .fc-cell-number { font-size: 10px !important; left: 3px; top: 2px; }
+.fc-grid-viewport.is-compact .fc-cell-letter { font-size: 22px !important; }
+.fc-cell-input { font-size: 16px !important; caret-color: transparent; }
+.fc-mobile-tools { display: flex; border-top: 1px solid #ccd9c6; padding: 8px 12px; gap: 5px; background: #f2f4e8; }
+.fc-mobile-tools button { flex: 1; border: none; background: transparent; color: #45624a; display: grid; place-content: center; justify-items: center; gap: 5px; font-size: 11px; font-weight: 750; min-height: 52px; border-radius: 4px; }
+.fc-mobile-tools button:hover { background: #e2e9d4; }
 
-/* Completion state */
-.fc-victory-overlay { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; background: rgba(15,31,39,.78); padding: 18px; overflow-y: auto; }
-.fc-victory-card { width: min(100%, 560px); max-height: calc(100dvh - 36px); overflow-y: auto; background: white; border-radius: 18px; padding: clamp(20px,4vw,38px); color: var(--ink); box-shadow: 0 18px 90px #051a2633; }
-.fc-victory-topline { display: flex; justify-content: space-between; border-bottom: 1px solid var(--line); padding-bottom: 14px; color: var(--muted); font-size: 12px; }
-.fc-victory-trophy { margin-top: 18px; width: 58px; height: 58px; display: grid; place-items: center; background: var(--blue-tint); color: var(--blue); border-radius: 15px; }
-.fc-victory-eyebrow { font-size: 12px; color: var(--blue); font-weight: 750; margin: 20px 0 6px; }
-.fc-victory-card h2 { font-size: clamp(40px,8vw,66px); font-weight: 750; letter-spacing: -.06em; line-height: 1; margin: 0; }
-.fc-victory-card h2 em { font: inherit; color: var(--blue); }
-.fc-victory-description { font-size: 14px; line-height: 1.55; color: var(--muted); max-width: 420px; }
-.fc-victory-stats { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; margin-top: 19px; }
-.fc-victory-stat { border: 1px solid var(--line); border-radius: 10px; padding: 12px 8px; min-width: 0; }
-.fc-victory-stat > div { display: flex; gap: 5px; align-items: center; color: var(--muted); font-size: 11px; }
-.fc-victory-stat > div span { font-size: 10px; }
-.fc-victory-stat strong { display: block; font-size: clamp(13px,2vw,20px); margin-top: 8px; overflow-wrap: anywhere; }
-.fc-victory-again { background: var(--blue); color: white; border: 0; border-radius: 10px; padding: 15px; width: 100%; margin-top: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; }
-.fc-victory-again:hover { background: var(--blue-hover); }
+/* Question/theory drawer for small viewports. */
+.fc-drawer-backdrop { position: fixed; inset: 0; background: rgba(20,44,31,.55); z-index: 90; display: flex; align-items: flex-end; }
+.fc-drawer { display: flex; flex-direction: column; width: 100%; max-height: 88dvh; background: var(--fc-paper); border-radius: 13px 13px 0 0; padding-bottom: env(safe-area-inset-bottom, 0px); }
+.fc-drawer-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: var(--fc-yellow); border-radius: 13px 13px 0 0; border-bottom: 2px solid var(--fc-ink); }
+.fc-drawer-header strong { font: 750 16px "Unbounded", sans-serif; }
+.fc-drawer-close { width: 42px; height: 42px; border: 1px solid #7a7958; border-radius: 4px; background: #fff6d9; display: grid; place-items: center; }
+.fc-drawer .fc-reference-tabs { flex-shrink: 0; padding: 8px 14px; }
+.fc-drawer .fc-reference-content { flex: 1; min-height: 0; max-height: unset; padding: 12px 15px 30px; }
 
-@media (max-width: 1150px) {
-  .fc-workspace { grid-template-columns: minmax(0, 1fr) 300px; }
-  .fc-main { padding-left: 18px; padding-right: 18px; }
+/* Completion modal: same game language, not a separate neon microsite. */
+.fc-victory-overlay { position: fixed; inset: 0; z-index: 200; background: #122b26d6; display: grid; place-items: center; padding: 20px; }
+.fc-victory-card { width: min(100%, 560px); max-height: 90dvh; overflow-y: auto; background: var(--fc-paper); border: 3px solid var(--fc-ink); box-shadow: 9px 9px 0 var(--fc-yellow); padding: 25px; color: var(--fc-ink); }
+.fc-victory-topline { display: flex; justify-content: space-between; font: 650 11px "IBM Plex Mono",monospace; border-bottom: 2px solid var(--fc-ink); padding-bottom: 12px; }
+.fc-victory-trophy { display: grid; place-items: center; background: #f9e6a8; width: 60px; height: 60px; color: #6b5a2a; margin-top: 19px; border-radius: 5px; }
+.fc-victory-eyebrow { font: 700 10px "IBM Plex Mono",monospace; color: #aa5b47; margin: 20px 0 8px; }
+.fc-victory-card h2 { margin: 0; font: 700 clamp(40px,7vw,65px)/1.05 "Unbounded",sans-serif; letter-spacing: -.05em; }
+.fc-victory-card h2 em { font-style: normal; color: #dc6c4f; }
+.fc-victory-description { color: var(--fc-muted); line-height: 1.6; font-size: 13px; }
+.fc-victory-stats { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 7px; margin-top: 16px; }
+.fc-victory-stat { padding: 9px; background: #f2f3e8; border: 1px solid #c9d6c8; min-width: 0; }
+.fc-victory-stat > div { display: flex; gap: 5px; align-items: center; color: var(--fc-muted); font-size: 10px; }
+.fc-victory-stat > div span { font-size: 9px; }
+.fc-victory-stat strong { display: block; font: 700 18px "Golos Text",sans-serif; margin-top: 8px; overflow-wrap: anywhere; }
+.fc-victory-again { display: flex; justify-content: center; align-items: center; gap: 9px; width: 100%; margin-top: 16px; padding: 12px; border: 1px solid var(--fc-ink); background: var(--fc-deep); color: white; font-weight: 750; }
+
+/* The grid must dominate desktop and remain readable on smaller monitors. */
+@media (max-width: 1240px) {
+  .fc-workspace { grid-template-columns: minmax(0,1fr) 315px; }
+  .fc-main { padding-inline: 18px; }
+  .fc-headline-group { gap: 12px; }
+  .fc-issue-tag { display: none; }
 }
-@media (max-width: 950px) and (min-width: 851px) {
-  .fc-workspace { grid-template-columns: 1fr; }
-  .fc-reference { position: static; }
-  .fc-reference-content { max-height: 340px; }
-}
-@media (max-width: 850px) {
-  .fc-header-inner { min-height: 63px; padding: 0 15px; }
-  .fc-mark { width: 37px; height: 37px; border-radius: 9px; font-size: 20px; }
-  .fc-identity > div strong { font-size: 16px; }
-  .fc-identity small { font-size: 10px; }
-  .fc-header-status { gap: 13px; }
-  .fc-header-progress { min-width: unset; gap: 6px; }
-  .fc-progress-track { display: none; }
-  .fc-header-timer { font-size: 12px; }
-  .fc-reset-button { width: 43px; height: 43px; padding: 0; }
-  .fc-reset-button span { display: none; }
-  .fc-main { padding: 17px 14px 28px; }
-  .fc-page-heading { margin-bottom: 15px; align-items: start; }
-  .fc-page-heading h1 { font-size: clamp(23px,5.7vw,30px); }
-  .fc-page-heading p { font-size: 12px; max-width: 370px; margin-top: 6px; }
-  .fc-heading-progress { display: none; }
+@media (max-width: 1160px) {
   .fc-workspace { display: block; }
-  .fc-board-heading { padding: 16px 18px 12px; }
-  .fc-board-heading h2 { font-size: 19px; }
-  .fc-board-eyebrow { font-size: 11px; margin-bottom: 2px; }
-  .fc-board-stat strong { font-size: 17px; }
-  .fc-active-clue { margin: 10px 18px 0; min-height: 0; padding: 8px 0 8px 12px; }
-  .fc-active-number { font-size: 12px; }
-  .fc-clue-question { font-size: 16px; line-height: 1.45; }
-  .fc-board-toolbar { padding: 14px 18px; }
-  .fc-board-score strong { font-size: 17px; }
-  .fc-action { min-height: 45px; padding: 0 12px; font-size: 12px; gap: 6px; }
-  .fc-board-actions { gap: 6px; }
-  .fc-under-game { align-items: start; margin: 13px 3px 0; font-size: 12px; }
+  .fc-board { max-width: 940px; margin: 0 auto; }
+  .fc-main { padding-top: 14px; }
+  .fc-page-heading { justify-content: center; }
+  .fc-heading-aside { display: none; }
+  .fc-headline-group { justify-content: center; }
+  .fc-board-grid { padding: 8px 13px 12px; }
+  .fc-under-game { max-width: 940px; margin-inline: auto; }
+  .fc-issue-tag { display: none; }
 }
-@media (max-width: 375px) {
-  .fc-identity small { display: none; }
+@media (max-width: 620px) {
+  .fc-header-inner { min-height: 58px; padding: 5px 12px; }
+  .fc-logo-symbol { width: 42px; height: 42px; }
+  .fc-identity { gap: 8px; }
+  .fc-identity-wordmark strong { font-size: 14px; }
+  .fc-identity-wordmark small { font-size: 7px; letter-spacing: 0; }
   .fc-header-status { gap: 9px; }
-  .fc-header-timer { font-size: 11px; }
-  .fc-board-toolbar { gap: 8px; }
-  .fc-action { padding: 0 9px; font-size: 12px; }
+  .fc-header-time { font-size: 11px; }
+  .fc-header-time svg { width: 13px; }
+  .fc-header-divider { height: 22px; }
+  .fc-header-count strong { font-size: 15px; }
+  .fc-header-count span { font-size: 10px; }
+  .fc-main { padding: 13px 12px 21px; }
+  .fc-page-heading { margin-bottom: 11px; }
+  .fc-page-heading h1 { font-size: clamp(19px, 5.2vw, 24px); }
+  .fc-board-heading { min-height: 44px; padding: 8px 11px; }
+  .fc-board-index { font-size: 10px; }
+  .fc-board-stat > span { font-size: 8px; }
+  .fc-board-stat strong { font-size: 14px; }
+  .fc-active-clue { margin: 10px 11px 2px; padding: 10px 11px; }
+  .fc-clue-question { font-size: 14px; margin-top: 9px; line-height: 1.45; }
+  .fc-active-number, .fc-active-length { font-size: 10px; }
+  .fc-word-navigation { margin-top: 10px; }
+  .fc-word-navigation button { min-height: 42px; padding-inline: 8px; }
+  .fc-zoom-bar { padding-inline: 11px; }
+  .fc-zoom-bar p { font-size: 10px; max-width: 185px; }
+  .fc-board-grid { padding-inline: 9px; }
+  .fc-board-toolbar { padding: 9px 10px; gap: 6px; flex-wrap: wrap; }
+  .fc-board-score span { font-size: 8px; }
   .fc-board-score strong { font-size: 15px; }
+  .fc-board-actions { gap: 5px; margin-left: auto; }
+  .fc-action { min-height: 41px; padding-inline: 8px; font-size: 11px; gap: 5px; }
+  .fc-under-game { align-items: flex-start; font-size: 10px; }
+  .fc-under-game > span { line-height: 1.4; }
+  .fc-restart-link { font-size: 10px; white-space: nowrap; padding: 3px; }
   .fc-victory-stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
-}
-
-/* Word-first tablet sizing; no giant 90px cells. */
-.fc-theory-empty { text-align: center; padding: 36px 14px 42px; }
-.fc-theory-empty-icon { margin: 0 auto 13px; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 16px; color: var(--blue); background: var(--blue-tint); }
-.fc-theory-empty h3 { max-width: 260px; margin: 0 auto 8px; font-size: 17px; letter-spacing: -.025em; }
-.fc-theory-empty p { max-width: 260px; margin: 0 auto; color: var(--muted); line-height: 1.55; font-size: 13px; }
-
-
-/* The same interactive, intersecting crossword on every screen. */
-.fc-zoom-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 12px 18px 4px;
-}
-.fc-zoom-bar p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.45;
-  max-width: 220px;
-}
-.fc-zoom-controls {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-.fc-zoom-controls button {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  color: var(--ink);
-  background: #f1f4f7;
-  border: 1px solid var(--line);
-  border-radius: 9px;
-}
-.fc-zoom-controls button:disabled { opacity: .36; cursor: default; }
-.fc-zoom-controls span {
-  font: 600 12px "IBM Plex Mono", monospace;
-  min-width: 40px;
-  text-align: center;
-  color: var(--muted);
-}
-.fc-grid-viewport.is-compact {
-  height: clamp(338px, 48dvh, 470px);
-  overflow-x: auto;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  touch-action: pan-x pan-y;
-  scrollbar-width: thin;
-  background:
-    linear-gradient(90deg, transparent 0, transparent calc(100% - 1px), #e6eaed calc(100% - 1px)),
-    #f9faf9;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-}
-.fc-grid-viewport.is-compact .fc-grid-center {
-  min-height: 100%;
-  align-items: start;
-  padding: 10px;
-}
-.fc-grid-viewport.is-compact .fc-cell {
-  border-width: 1.5px;
-  border-radius: 4px;
-}
-.fc-grid-viewport.is-compact .fc-cell-number {
-  left: 4px;
-  top: 3px;
-  font-size: 10px !important;
-}
-.fc-grid-viewport.is-compact .fc-cell-letter {
-  font-size: 22px !important;
-}
-.fc-cell-input {
-  font-size: 16px !important;
-  caret-color: transparent;
-}
-@media (max-width: 850px) {
-  .fc-board-grid {
-    padding: 8px 14px 15px;
-  }
-  .fc-zoom-bar {
-    padding: 9px 14px 2px;
-  }
-}
 @media (max-width: 350px) {
-  .fc-zoom-bar p { max-width: 165px; font-size: 11px; }
-  .fc-zoom-controls button { width: 40px; height: 44px; }
-  .fc-zoom-controls span { min-width: 34px; }
+  .fc-identity-wordmark small { display: none; }
+  .fc-header-count { gap: 3px; }
+  .fc-zoom-bar p { max-width: 145px; }
+  .fc-zoom-controls button { width: 40px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
