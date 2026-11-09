@@ -8,24 +8,24 @@ interface Props {
 }
 
 export default function Header({ solvedCount, elapsedLabel }: Props) {
-  const total = CROSSWORD_ENTRIES.length;
-
   return (
     <header className="fc-header">
       <div className="fc-header-inner">
         <div className="fc-identity" aria-label="FINCROSS — финансовый кроссворд">
           <FinCrossMark className="fc-logo-symbol" />
           <div className="fc-identity-wordmark">
-            <strong><span>FIN</span>CROSS</strong>
-            <small>КРОССВОРД О ДЕНЬГАХ</small>
+            <strong>FINCROSS</strong>
+            <span>Обществознание / Экономика</span>
           </div>
         </div>
         <div className="fc-header-status">
-          <span className="fc-header-time" title="Время в игре"><Clock3 size={16} aria-hidden="true" /> {elapsedLabel}</span>
+          <span className="fc-header-time" aria-label={`Время в игре: ${elapsedLabel}`}>
+            <Clock3 size={16} aria-hidden="true" /> {elapsedLabel}
+          </span>
           <div className="fc-header-divider" aria-hidden="true"/>
-          <div className="fc-header-count" aria-label={`Решено ${solvedCount} из ${total} слов`}>
+          <div className="fc-header-count" aria-label={`Разгадано ${solvedCount} из ${CROSSWORD_ENTRIES.length} слов`}>
             <strong>{String(solvedCount).padStart(2, '0')}</strong>
-            <span>/ {total}</span>
+            <span>/ {CROSSWORD_ENTRIES.length}</span>
           </div>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lightbulb, ShieldCheck, List, BookOpen, ChevronLeft, ChevronRight, X, LocateFixed, ZoomIn, ZoomOut, CheckCircle2, RotateCcw, Sparkles } from 'lucide-react';
+import { Lightbulb, ShieldCheck, List, BookOpen, ChevronLeft, ChevronRight, X, LocateFixed, ZoomIn, ZoomOut, CheckCircle2, RotateCcw } from 'lucide-react';
 
 import Header from './components/Header';
 import CrosswordGrid from './components/CrosswordGrid';
@@ -395,12 +395,12 @@ export default function App() {
       <main className="fc-main" id="play">
         <div className="fc-page-heading">
           <div className="fc-headline-group">
-            <span className="fc-issue-tag"><Sparkles size={14} aria-hidden="true" /> ИГРА, В КОТОРОЙ СХОДЯТСЯ СЛОВА</span>
-            <h1>Разгадай <span>рынок</span></h1>
+            <span className="fc-learning-path">Практика по обществознанию</span>
+            <h1>Финансовый кроссворд</h1>
           </div>
           <div className="fc-heading-aside">
-            <span>20 финансовых терминов</span>
-            <strong>{progress}% собрано</strong>
+            <span>20 терминов по экономике</span>
+            <strong>{progress}% пройдено</strong>
           </div>
         </div>
 
@@ -408,10 +408,10 @@ export default function App() {
           <section className="fc-board" aria-label="Финансовый кроссворд">
             <div className="fc-board-heading">
               <div className="fc-board-title-wrap">
-                <span className="fc-board-index">КРОССВОРД / № 01</span>
+                <span className="fc-board-index">Кроссворд</span>
               </div>
               <div className="fc-board-stat">
-                <span>СОБРАНО СЛОВ</span>
+                <span>Решено слов</span>
                 <strong>{String(solvedEntries.size).padStart(2,'0')}<em> / {totalWords}</em></strong>
               </div>
             </div>
@@ -443,7 +443,7 @@ export default function App() {
 
             <div className="fc-board-toolbar">
               <div className="fc-board-score">
-                <span>НАБРАНО ОЧКОВ</span><strong>{(hasStarted ? score : 0).toLocaleString('ru-RU')}</strong>
+                <span>Очки</span><strong>{(hasStarted ? score : 0).toLocaleString('ru-RU')}</strong>
               </div>
               <div className="fc-board-actions">
                 <button type="button" className="fc-action fc-action-secondary" onClick={handleHint} title="Открыть букву в выбранном слове">
@@ -477,14 +477,14 @@ export default function App() {
           {!isCompact && <aside className="fc-reference" aria-label="Вопросы и теория">
             {activeClue}
             <div className="fc-reference-heading">
-              <strong>Подсказки к словам</strong><span>лист №01</span>
+              <strong>Вопросы и теория</strong><span>20 слов</span>
             </div>
             {reference}
           </aside>}
         </div>
 
         <div className="fc-under-game">
-          <span><CheckCircle2 size={17} aria-hidden="true" /> Прогресс сохраняется сам. Разгадай слово — откроешь его объяснение.</span>
+          <span><CheckCircle2 size={17} aria-hidden="true" /> Прогресс сохраняется автоматически. После решения слова откроется объяснение.</span>
           <button type="button" className="fc-restart-link" onClick={resetWithConfirmation} aria-label="Начать кроссворд заново">
             <RotateCcw size={14} /> Начать заново
           </button>
